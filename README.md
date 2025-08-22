@@ -57,15 +57,6 @@ classDiagram
         +exportPDF()
     }
 
-    %% Classes auxiliares
-    class APIConnector {
-        +callAPI(endpoint: String, params: Dict)
-    }
-
-    class Logger {
-        +log(message: String)
-    }
-
     %% Herança
     WeatherAgent --|> Agent
     AccommodationAgent --|> Agent
@@ -83,12 +74,5 @@ classDiagram
     RouterAgent --> BudgetAgent
     BudgetAgent --> TravelItinerary
     RouterAgent --> TravelItinerary
-    WeatherAgent --> APIConnector
-    AccommodationAgent --> APIConnector
-    TransportAgent --> APIConnector
-    TourismAgent --> APIConnector
-    RouterAgent --> Logger
-    TravelAgentSystem --> Logger
-
 
 ```

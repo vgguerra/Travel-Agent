@@ -5,10 +5,6 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 class BaseAgent(ABC):
 
-    """
-    Abstract class that contains all of an Agent will be needed
-    """
-
     def __init__(self, llm=None, tools=None):
         self.prompt = None
         self.llm = llm
