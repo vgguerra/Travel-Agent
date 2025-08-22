@@ -22,9 +22,13 @@ class Graph:
 
         builder.add_node("tools",ToolNode(self.tools))
 
-        builder.set_entry_point("weather_agent")
-        builder.add_conditional_edges("weather_agent", tools_condition)
-        builder.add_edge("tools", "weather_agent")
+        builder.set_entry_point("accomodation_agent")
+        builder.add_conditional_edges("accomodation_agent", tools_condition)
+        builder.add_edge("tools","accomodation_agent")
+
+        # builder.set_entry_point("weather_agent")
+        # builder.add_conditional_edges("weather_agent", tools_condition)
+        # builder.add_edge("tools", "weather_agent")
 
         memory = MemorySaver()
         graph = builder.compile(checkpointer=memory)
