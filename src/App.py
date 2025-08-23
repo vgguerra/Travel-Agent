@@ -20,12 +20,17 @@ class App:
     @staticmethod
     def main():
         # Tools
+
+        # Weather tools
         weather = WeatherTools()
         weather_tools = [weather.getWeather]
 
+        # Accomodation tools
         accomodation = AccomodationTools()
         accomodation_tools = [accomodation.getAccomodation]
 
+
+        #Agents
 
         # Weather Agent
         weatherAgent = WeatherAgent(LLM,weather_tools)
@@ -43,7 +48,6 @@ class App:
         # Ir adicionando as ferramentas conforme o sistema for aumentando
         all_tools: list = weather_tools + accomodation_tools
 
-        print(all_tools)
         run = TravelAgentSystem(agents,all_tools)
 
         run.cli_mode()
