@@ -6,6 +6,9 @@ import os
 
 load_dotenv()
 
+# TODO: Implementar uma função que faça a busca automática do IATA da cidade
+# TODO: Implementar uma função que verifique se a cidade tem IATA própria e caso não tenha, realize a busca dos hoteis na cidade mais próxima que tenha IATA
+
 class AccomodationTools:
 
     def __init__(self):
