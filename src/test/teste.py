@@ -1,54 +1,33 @@
-from amadeus import Client, ResponseError
-from dotenv import load_dotenv
-from datetime import datetime, timedelta
+import requests
+from geopy.geocoders import Nominatim
 
-load_dotenv()
-amadeus = Client()
+def get_lat_long(cidade):
+    geolocator = Nominatim(user_agent="geoapi_exemplo")
+    try:
+        location = geolocator.geocode(cidade, timeout=10)
+        if location:
+            return location.latitude, location.longitude
+        else:
+            return None
+    except Exception as e:
+        print(f"Erro ao buscar coordenadas: {e}")
+        return None
 
-response = amadeus.reference_data.locations.get(
-            keyword="Lisbon",
-            subType="CITY"
-        )
+latitude,longitude = get_lat_long("São Paulo, Brasil")
 
-print(response.data)
+url = "https://booking-com.p.rapidapi.com/v2/hotels/search-by-coordinates"
 
-# # Datas de teste
-# checkin = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
-# checkout = (datetime.now() + timedelta(days=35)).strftime("%Y-%m-%d")
-#
-# hotels_resp = amadeus.reference_data.locations.hotels.by_city.get(cityCode="PAR")
-# print(f"{len(hotels_resp.data)} hotéis encontrados.")
-#
-# results = []
-#
-# for hotel in hotels_resp.data[:50]:
-#     hotel_id = hotel['hotelId']
-#
-#     try:
-#         offers_resp = amadeus.shopping.hotel_offers_search.get(
-#             hotelIds=hotel_id,
-#             checkInDate=checkin,
-#             checkOutDate=checkout,
-#             adults=2
-#         )
-#
-#         if not offers_resp.data:
-#             print(f"No offers found for hotel id {hotel_id}")
-#             continue
-#
-#         offer = offers_resp.data[0]
-#         nome = hotel['name']
-#         preco = offer['offers'][0]['price']['total']
-#         moeda = offer['offers'][0]['price']['currency']
-#         rating = offer['hotel'].get('rating', 'N/A')
-#
-#         results.append({
-#             "name": nome,
-#             "price": f"{preco} {moeda}",
-#             "rating": rating
-#         })
-#
-#     except ResponseError as error:
-#         print("Erro da API Amadeus:", str(error))
-#
-# print(results)
+querystring = {"include_adjacency":"true","children_ages":"5,0","categories_filter_ids":"class::2,class::4,free_cancellation::1","page_number":"0","children_number":"2","adults_number":"2","checkout_date":"2025-10-15","longitude":longitude,"room_number":"1","order_by":"popularity","units":"metric","checkin_date":"2025-10-14","latitude":latitude,"filter_by_currency":"BRL","locale":"pt-br"}
+
+headers = {
+	"x-rapidapi-key": "eb506d7ea4msh0f24bd3860a9d4bp148edcjsn7690c17937b1",
+	"x-rapidapi-host": "booking-com.p.rapidapi.com"
+}
+
+response = requests.get(url, headers=headers, params=querystring)
+data = response.json()
+
+hotels = data.get("results", [])[:10]
+
+for i, hotel in enumerate(hotels, 1):
+    print(f"{i}. {hotel["name"]} - {hotel.get('address')} - {hotel["priceBreakdown"]["grossPrice"]["value"]} BRL")

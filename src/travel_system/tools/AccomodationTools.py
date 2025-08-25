@@ -1,5 +1,8 @@
 from datetime import datetime
-from amadeus import Client, ResponseError
+
+import requests
+from amadeus import Client
+from geopy import Nominatim
 from langchain_core.tools import tool
 from dotenv import load_dotenv
 import os
@@ -8,6 +11,21 @@ load_dotenv()
 
 # TODO: Implementar uma função que faça a busca automática do IATA da cidade
 # TODO: Implementar uma função que verifique se a cidade tem IATA própria e caso não tenha, realize a busca dos hoteis na cidade mais próxima que tenha IATA
+
+
+URL = "https://booking-com.p.rapidapi.com/v2/hotels/search-by-coordinates"
+
+def _get_lat_long(cidade: str):
+    geolocator = Nominatim(user_agent="travel_system")
+    try:
+        location = geolocator.geocode(cidade, timeout=10)
+        if location:
+            return location.latitude, location.longitude
+        else:
+            return None
+    except Exception as e:
+        print(f"Erro ao buscar coordenadas: {e}")
+        return None
 
 class AccomodationTools:
 
@@ -20,76 +38,69 @@ class AccomodationTools:
         name_or_callable="getAccomodation",
         description="Get accommodation options at the specified days and city"
     )
-    def getAccomodation(city: str,
-                        checkin: str,
-                        checkout: str,
-                        type_: str = None,
-                        adults: int = 1,
-                        debug: bool = True):
-        """
-        Busca acomodações reais via Amadeus API.
-        Retorna lista de hotéis com nome, preço e rating.
-        """
-        try:
-            service = AccomodationTools()
-            amadeus = service.amadeus
 
-            # 1. Obter cityCode (IATA)
-            city_resp = amadeus.reference_data.locations.get(
-                keyword=city,
-                subType="CITY"
+    def getAccomodation(adults: int,checkout_date: str,checkin_date: str,city: str, room_number: int, debug: bool = True):
+
+        """
+            Busca acomodações em uma cidade específica usando a API Rapid-Booking, retornando uma lista de hotéis com nome e preço.
+
+            Parâmetros:
+            ----------
+            adults : int
+                Número de adultos que irão se hospedar.
+            checkout_date : str
+                Data de checkout no formato 'dd/mm/YYYY' (ex: '15/10/2025').
+            checkin_date : str
+                Data de checkin no formato 'dd/mm/YYYY' (ex: '14/10/2025').
+            city : str
+                Nome da cidade onde deseja buscar acomodações (ex: 'São Paulo, Brasil').
+            room_number : int
+                Número de quartos necessários.
+            debug : bool, opcional
+                Se True, imprime informações intermediárias para depuração. Default é True.
+
+            Retorna:
+            -------
+            list[str]
+                Uma lista com até 10 hotéis encontrados, cada um no formato:
+                "1. Nome do Hotel - Preço BRL"
+
+            Exemplo de uso:
+            ---------------
+            getAccomodation(
+                adults=2,
+                checkout_date="15/10/2025",
+                checkin_date="14/10/2025",
+                city="São Paulo, Brasil",
+                room_number=1
             )
-            if not city_resp.data:
-                if debug: print("Cidade não encontrada.")
-                return []
+        """
 
-            city_code = city_resp.data[0]["iataCode"]
-            if debug: print("City code:", city_code)
+        checkin_fmt = datetime.strptime(checkin_date, "%d/%m/%Y").strftime("%Y-%m-%d")
+        checkout_fmt = datetime.strptime(checkout_date, "%d/%m/%Y").strftime("%Y-%m-%d")
 
-            checkin_fmt = datetime.strptime(checkin, "%d/%m/%Y").strftime("%Y-%m-%d")
-            checkout_fmt = datetime.strptime(checkout, "%d/%m/%Y").strftime("%Y-%m-%d")
+        if debug: print(city)
 
-            if debug:
-                print("Checkin:", checkin_fmt, "Checkout:", checkout_fmt)
+        latitude,longitude = _get_lat_long(city)
 
-            hotels_resp = amadeus.reference_data.locations.hotels.by_city.get(cityCode=city_code)
-            if debug: print(f"{len(hotels_resp.data)} hotéis encontrados.")
+        querystring = {"include_adjacency": "true","categories_filter_ids": "class::2,class::4,free_cancellation::1", "adults_number": str(adults), "checkout_date": checkout_fmt, "longitude": longitude, "room_number": str(room_number), "order_by": "price", "units": "metric", "checkin_date": checkin_fmt, "latitude": latitude, "filter_by_currency": "BRL", "locale": "pt-br"}
 
-            results = []
-            for hotel in hotels_resp.data[:10]:
-                hotel_id = hotel['hotelId']
+        headers = {
+            "x-rapidapi-key": os.getenv("RAPIDAPI_KEY"),
+            "x-rapidapi-host": os.getenv("RAPIDAPI_HOST")
+        }
 
-                try:
-                    offers_resp = amadeus.shopping.hotel_offers_search.get(
-                        hotelIds=hotel_id,
-                        checkInDate=checkin_fmt,
-                        checkOutDate=checkout_fmt,
-                        adults=adults
-                    )
+        try:
+            response = requests.get(URL, headers=headers, params=querystring)
+            data = response.json()
 
-                    if not offers_resp.data:
-                        continue
+            hotels = data.get("result",[])[:10]
 
-                    offer = offers_resp.data[0]
-                    nome = hotel['name']
-                    preco = offer['offers'][0]['price']['total']
-                    moeda = offer['offers'][0]['price']['currency']
-                    rating = offer['hotel'].get('rating', 'N/A')
+            results =[]
 
-                    if type_ and type_.lower() not in nome.lower():
-                        continue
-
-                    results.append({
-                        "name": nome,
-                        "price": f"{preco} {moeda}",
-                        "rating": rating
-                    })
-
-                except ResponseError as e:
-                    if debug: print(f"Erro ao buscar ofertas do hotel {hotel['name']}: {e}")
+            for i, hotel in enumerate(hotels, 1):
+                results.append(f"{i}. {hotel["name"]} - {hotel["priceBreakdown"]["grossPrice"]["value"]} BRL")
 
             return results
-
-        except ResponseError as error:
-            if debug: print("Erro da API Amadeus:", str(error))
-            return []
+        except Exception as e:
+            print(f"Erro ao buscar acomodação: {e}")
