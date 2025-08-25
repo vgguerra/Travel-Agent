@@ -22,8 +22,7 @@ class AccomodationTools:
                         checkout: str,
                         type_: str = None,
                         adults: int = 1,
-                        rooms: int = 1,
-                        debug: bool = False):
+                        debug: bool = True):
         """
         Busca acomodações reais via Amadeus API.
         Retorna lista de hotéis com nome, preço e rating.
