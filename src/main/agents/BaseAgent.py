@@ -22,7 +22,7 @@ class BaseAgent(ABC):
         )
 
     @abstractmethod
-    def run(self, state):
+    def call(self, state):
         """
         Method that runs the agent. This method should be overridden.
         """

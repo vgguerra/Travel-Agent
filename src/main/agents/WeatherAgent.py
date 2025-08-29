@@ -1,5 +1,5 @@
-from src.travel_system.agents.BaseAgent import BaseAgent
-from src.travel_system.agents.state.AgentState import AgentState
+from src.main.agents.BaseAgent import BaseAgent
+from src.main.agents.state.AgentState import AgentState
 
 
 class WeatherAgent(BaseAgent):
@@ -7,7 +7,7 @@ class WeatherAgent(BaseAgent):
     Class that represents a Weather Agent that uses the Weather API.
     """
 
-    def  run(self, state: AgentState):
+    def  call(self, state: AgentState):
         try:
             chain = self.llm.bind_tools(self.tools)
         except Exception as e:

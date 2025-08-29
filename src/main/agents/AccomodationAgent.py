@@ -1,10 +1,10 @@
-from src.travel_system.agents.BaseAgent import BaseAgent
-from src.travel_system.agents.state.AgentState import AgentState
+from src.main.agents.BaseAgent import BaseAgent
+from src.main.agents.state.AgentState import AgentState
 
 
 class AccomodationAgent(BaseAgent):
 
-    def run(self, state: AgentState):
+    def call(self, state: AgentState):
 
         try:
             chain = self.llm.bind_tools(self.tools)

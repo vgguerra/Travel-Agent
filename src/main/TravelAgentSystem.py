@@ -2,8 +2,8 @@ import datetime
 
 from langchain_core.messages import HumanMessage
 
-from src.travel_system.agents.BaseAgent import BaseAgent
-from src.travel_system.graph.Graph import Graph
+from src.main.agents.BaseAgent import BaseAgent
+from src.main.graph.Graph import Graph
 from langfuse.langchain import CallbackHandler
 import uuid
 

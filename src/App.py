@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
-from src.travel_system.TravelAgentSystem import TravelAgentSystem
-from src.travel_system.agents.AccomodationAgent import AccomodationAgent
-from src.travel_system.agents.WeatherAgent import WeatherAgent
-from src.travel_system.tools.AccomodationTools import AccomodationTools
-from src.travel_system.tools.WeatherTools import WeatherTools
+from src.main.TravelAgentSystem import TravelAgentSystem
+from src.main.agents.AccomodationAgent import AccomodationAgent
+from src.main.agents.WeatherAgent import WeatherAgent
+from src.main.tools.AccomodationTools import AccomodationTools
+from src.main.tools.WeatherTools import WeatherTools
 
 load_dotenv()
 
@@ -34,11 +34,11 @@ class App:
 
         # Weather Agent
         weatherAgent = WeatherAgent(LLM,weather_tools)
-        weatherAgent.set_prompt("./travel_system/prompts/weather_system.txt")
+        weatherAgent.set_prompt("./main/prompts/weather_system.txt")
 
         # Accomodation Agent
         accomodationAgent = AccomodationAgent(LLM,accomodation_tools)
-        accomodationAgent.set_prompt("./travel_system/prompts/accomodation_system.txt")
+        accomodationAgent.set_prompt("./main/prompts/accomodation_system.txt")
 
         agents = {
             "weather_agent": weatherAgent,

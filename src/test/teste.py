@@ -1,5 +1,11 @@
+import os
+
 import requests
 from geopy.geocoders import Nominatim
+from dotenv import load_dotenv
+from datetime import datetime
+
+load_dotenv()
 
 def get_lat_long(cidade):
     geolocator = Nominatim(user_agent="geoapi_exemplo")
@@ -15,19 +21,22 @@ def get_lat_long(cidade):
 
 latitude,longitude = get_lat_long("São Paulo, Brasil")
 
-url = "https://booking-com.p.rapidapi.com/v2/hotels/search-by-coordinates"
+url = "https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotelsByCoordinates"
 
-querystring = {"include_adjacency":"true","children_ages":"5,0","categories_filter_ids":"class::2,class::4,free_cancellation::1","page_number":"0","children_number":"2","adults_number":"2","checkout_date":"2025-10-15","longitude":longitude,"room_number":"1","order_by":"popularity","units":"metric","checkin_date":"2025-10-14","latitude":latitude,"filter_by_currency":"BRL","locale":"pt-br"}
+
+querystring = {"latitude":latitude,"longitude":longitude,"arrival_date":"2025-09-24","departure_date":"2025-09-28","adults":"1","children_age":"0,17","room_qty":"1","units":"metric","page_number":"1","temperature_unit":"c","languagecode":"pt-br","currency_code":"BRL","location":"BR"}
+
 
 headers = {
-	"x-rapidapi-key": "eb506d7ea4msh0f24bd3860a9d4bp148edcjsn7690c17937b1",
-	"x-rapidapi-host": "booking-com.p.rapidapi.com"
+	"x-rapidapi-key": os.getenv("RAPID_KEY"),
+    "x-rapidapi-host": os.getenv("RAPID_HOST")
 }
+
 
 response = requests.get(url, headers=headers, params=querystring)
 data = response.json()
 
-hotels = data.get("results", [])[:10]
+hotels = data["data"]["result"]
 
-for i, hotel in enumerate(hotels, 1):
-    print(f"{i}. {hotel["name"]} - {hotel.get('address')} - {hotel["priceBreakdown"]["grossPrice"]["value"]} BRL")
+for i, hotel in enumerate(hotels, 0):
+    print(f"{i}. {hotel["hotel_name"]} - {hotel["composite_price_breakdown"]["net_amount"]["value"]} BRL")

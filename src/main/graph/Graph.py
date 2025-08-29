@@ -2,8 +2,8 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from src.travel_system.agents.BaseAgent import BaseAgent
-from src.travel_system.agents.state.AgentState import AgentState
+from src.main.agents.BaseAgent import BaseAgent
+from src.main.agents.state.AgentState import AgentState
 
 
 class Graph:
