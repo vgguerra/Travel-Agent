@@ -18,7 +18,7 @@ class Graph:
         builder = StateGraph(AgentState)
 
         for name, agent in self.agents.items():
-            builder.add_node(name, agent.run)
+            builder.add_node(name, agent.call)
 
         builder.add_node("tools",ToolNode(self.tools))
 
