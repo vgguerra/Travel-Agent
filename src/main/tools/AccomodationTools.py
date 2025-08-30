@@ -29,10 +29,6 @@ def _get_lat_long(cidade: str):
 
 class AccomodationTools:
 
-    def __init__(self):
-        # Cria o client Amadeus
-        self.amadeus = Client()
-
     @staticmethod
     @tool(
         name_or_callable="getAccomodation",

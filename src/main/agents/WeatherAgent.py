@@ -11,12 +11,12 @@ class WeatherAgent(BaseAgent):
         try:
             chain = self.llm.bind_tools(self.tools)
         except Exception as e:
-            raise print(f"ERROR: {e}")
+            raise ValueError(f"ERROR: {e}")
 
         if self.prompt is not None:
             result = (self.prompt | chain).invoke(state)
         else:
-            raise print("No prompt given")
+            raise ValueError("No prompt given")
 
 
 
