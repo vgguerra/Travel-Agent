@@ -10,8 +10,6 @@ load_dotenv()
 
 # TODO: Adicionar a feature de retornar os voos mais detalhadamente, fornecendo o itinerário, conexões, etc.
 
-# TODO: Fazer a validação de dados que serão passados como o tipo de viagem (Round Trip ou One Way), etc.
-
 url = "https://tripadvisor16.p.rapidapi.com/api/v1/flights/searchFlights"
 
 class TransportTools:
