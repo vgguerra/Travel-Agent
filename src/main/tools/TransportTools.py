@@ -3,6 +3,7 @@ import os
 from amadeus import Client, ResponseError
 from dotenv import load_dotenv
 from langchain_core.tools import tool
+from datetime import datetime
 import requests
 
 load_dotenv()
@@ -41,13 +42,25 @@ class TransportTools:
             adults (int): Number of adult passengers.
             num_senior (int, optional): Number of senior passengers. Defaults to 0.
             return_date (str, optional): Return date if round trip. Defaults to None.
-            class_type (str, optional): Cabin class ('ECONOMY', 'BUSINESS', etc.). Defaults to "ECONOMY".
+            class_type (str, optional): Cabin class ('ECONOMY', 'BUSINESS', PREMIUM_ECONOMY or FIRST). Defaults to "ECONOMY".
 
         Returns:
             List[Dict]: A list of flight options with prices and details.
         """
 
-        # Monta a query de acordo com ida ou ida+volta
+        allowed_classes = ["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]
+        if class_type not in allowed_classes:
+            raise ValueError(f"class_type inválido. Escolha entre: {', '.join(allowed_classes)}")
+
+        def validate_date(date_str):
+            try:
+                datetime.strptime(date_str, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError(f"Data inválida: {date_str}. Use o formato YYYY-MM-DD.")
+
+        validate_date(date)
+
+
         querystring = {
             "sourceAirportCode": departure_city,
             "destinationAirportCode": arrival_city,
@@ -64,6 +77,7 @@ class TransportTools:
         }
 
         if return_date:
+            validate_date(return_date)
             querystring["returnDate"] = return_date
 
         headers = {
@@ -82,7 +96,7 @@ class TransportTools:
             results.append({
                 "index": i,
                 "price": price,
-                # "details": flight
+                "details": flight
             })
 
         return results
@@ -91,8 +105,8 @@ class TransportTools:
 if __name__ == "__main__":
     tools = TransportTools()
     teste = tools.getFlights(
-        departure_city="GRU",   # São Paulo
-        arrival_city="LON",     # Londres
+        departure_city="GRU",
+        arrival_city="LON",
         date="2025-11-01",
         itinerary_type="ONE_WAY",
         adults=1,
