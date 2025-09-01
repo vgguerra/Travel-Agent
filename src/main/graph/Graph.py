@@ -22,9 +22,13 @@ class Graph:
 
         builder.add_node("tools",ToolNode(self.tools))
 
-        builder.set_entry_point("transport_agent")
-        builder.add_conditional_edges("transport_agent", tools_condition)
-        builder.add_edge("tools", "transport_agent")
+        builder.set_entry_point("tourism_agent")
+        builder.add_conditional_edges("tourism_agent", tools_condition)
+        builder.add_edge("tools", "tourism_agent")
+
+        # builder.set_entry_point("transport_agent")
+        # builder.add_conditional_edges("transport_agent", tools_condition)
+        # builder.add_edge("tools", "transport_agent")
 
         # builder.set_entry_point("accomodation_agent")
         # builder.add_conditional_edges("accomodation_agent", tools_condition)

@@ -2,9 +2,11 @@ from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from src.main.TravelAgentSystem import TravelAgentSystem
 from src.main.agents.AccomodationAgent import AccomodationAgent
+from src.main.agents.TourismAgent import TourismAgent
 from src.main.agents.TransportAgent import TransportAgent
 from src.main.agents.WeatherAgent import WeatherAgent
 from src.main.tools.AccomodationTools import AccomodationTools
+from src.main.tools.TourismTools import TourismTools
 from src.main.tools.TransportTools import TransportTools
 from src.main.tools.WeatherTools import WeatherTools
 
@@ -33,6 +35,8 @@ class App:
         transport = TransportTools()
         transport_tools = [transport.getFlights]
 
+        tourism = TourismTools()
+        tourism_tools = [tourism.getTourismIdeas]
 
         #Agents
 
@@ -48,14 +52,19 @@ class App:
         transportAgent = TransportAgent(LLM,transport_tools)
         transportAgent.set_prompt("./prompts/transport_system.txt")
 
+        # Tourism Agent
+        tourismAgent = TourismAgent(LLM,tourism_tools)
+        tourismAgent.set_prompt("./prompts/tourism_system.txt")
+
         agents = {
             "weather_agent": weatherAgent,
             "accomodation_agent": accomodationAgent,
             "transport_agent": transportAgent,
+            "tourism_agent": tourismAgent,
         }
 
         # Ir adicionando as ferramentas conforme o sistema for aumentando
-        all_tools: list = weather_tools + accomodation_tools + transport_tools
+        all_tools: list = weather_tools + accomodation_tools + transport_tools + tourism_tools
 
         run = TravelAgentSystem(agents,all_tools)
 

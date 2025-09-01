@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import requests
 from amadeus import Client
 from geopy import Nominatim

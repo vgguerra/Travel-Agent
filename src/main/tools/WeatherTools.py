@@ -18,15 +18,16 @@ class WeatherTools:
     def getWeather(city: str, days: int) -> str:
 
         """
-        Retorna a previsão do tempo para uma cidade específica nos próximos X dias.
+            Returns the weather forecast for a specific city for the next X days.
 
-        Parâmetros:
-        - city (str): Nome da cidade a consultar.
-        - days (int): Quantos dias de previsão retornar (máx: 5 para este endpoint).
+            Args:
+                city (str): Name of the city to get the forecast for.
+                days (int): Number of days to return the forecast for (maximum 5 for this endpoint).
 
-        Retorna:
-        - str: Lista com previsões resumidas.
+            Returns:
+                str: A summarized list of weather forecasts for the requested period.
         """
+
         if API_KEY is None or BASE_URL_FORECAST is None:
             raise Exception('API key and base url must be set')
 
