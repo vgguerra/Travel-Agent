@@ -15,7 +15,8 @@ class TransportAgent(BaseAgent):
                 raise ValueError("Prompt was not given")
 
             return {
-                "messages": result
+                "messages": result,
+                "transport": result.content.strip()
             }
 
         except Exception as e:

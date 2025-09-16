@@ -18,4 +18,5 @@ class AccomodationAgent(BaseAgent):
 
         return {
             "messages": result,
+            "accommodation": result.content.strip()
         }

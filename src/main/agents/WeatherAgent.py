@@ -22,4 +22,5 @@ class WeatherAgent(BaseAgent):
 
         return {
             "messages": result,
+            "weather": result.content.strip()
         }

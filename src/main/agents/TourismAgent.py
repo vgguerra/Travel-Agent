@@ -15,7 +15,8 @@ class TourismAgent(BaseAgent):
                 raise ValueError("Prompt was not given")
 
             return {
-                "messages": result
+                "messages": result,
+                "tourism": result.content.strip()
             }
 
         except Exception as e:
