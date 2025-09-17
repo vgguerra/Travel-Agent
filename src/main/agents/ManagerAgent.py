@@ -7,47 +7,52 @@ class ManagerAgent(BaseAgent):
     def _capture_data(input_text: str) -> dict:
         data = {}
 
-        if "[DEPARTURE_CITY]:" in input_text:
-            data["departure_city"] = input_text.split("[DEPARTURE_CITY]:")[1].split("[")[1].split("]")[0]
+        if "[CIDADE_SAÍDA]:" in input_text:
+            data["departure_city"] = input_text.split("[CIDADE_SAÍDA]:")[1].split("[")[1].split("]")[0]
 
-        if "[DESTINATION_CITY]:" in input_text:
-            data["destination_city"] = input_text.split("[DESTINATION_CITY]:")[1].split("[")[1].split("]")[0]
+        if "[CIDADE_DESTINO]:" in input_text:
+            data["destination_city"] = input_text.split("[CIDADE_DESTINO]:")[1].split("[")[1].split("]")[0]
 
-        if "[DEPARTURE_DATE]:" in input_text:
-            data["departure_date"] = input_text.split("[DEPARTURE_DATE]:")[1].split("[")[1].split("]")[0]
+        if "[DATA_IDA]:" in input_text:
+            data["departure_date"] = input_text.split("[DATA_IDA]:")[1].split("[")[1].split("]")[0]
 
-        if "[RETURN_DATE]:" in input_text:
-            data["return_date"] = input_text.split("[RETURN_DATE]:")[1].split("[")[1].split("]")[0]
+        if "[DATA_VOLTA]:" in input_text:
+            data["return_date"] = input_text.split("[DATA_VOLTA]:")[1].split("[")[1].split("]")[0]
 
-        if "[NUMBER_ADULTS]:" in input_text:
-            data["adults"] = int(input_text.split("[NUMBER_ADULTS]:")[1].split("[")[1].split("]")[0])
+        if "[NUMERO_ADULTOS]:" in input_text:
+            try:
+                data["adults"] = int(input_text.split("[NUMERO_ADULTOS]:")[1].split("[")[1].split("]")[0])
+            except ValueError:
+                data["adults"] = None
 
-        if "[NUMBER_ROOMS]:" in input_text:
-            data["rooms"] = int(input_text.split("[NUMBER_ROOMS]:")[1].split("[")[1].split("]")[0])
+        if "[NUMERO_QUARTOS]:" in input_text:
+            try:
+                data["rooms"] = int(input_text.split("[NUMERO_QUARTOS]:")[1].split("[")[1].split("]")[0])
+            except ValueError:
+                data["rooms"] = None
 
-        if "[TRIP_TYPE]:" in input_text:
-            data["trip_type"] = input_text.split("[TRIP_TYPE]:")[1].split("[")[1].split("]")[0]
+        if "[TIPO_VIAGEM]:" in input_text:
+            data["trip_type"] = input_text.split("[TIPO_VIAGEM]:")[1].split("[")[1].split("]")[0]
 
         return data
 
     def call(self, state):
 
         if self.prompt is not None:
-            result = (self.prompt | self.llm).invoke(state)
+            prompt = self.prompt.format(**state)
+            result = self.llm.invoke(prompt)
         else:
             raise ValueError("No prompt given")
 
         data = self._capture_data(result.content.strip())
 
-        print(data)
-
         return {
             "messages": result,
-            "departure_city": data["departure_city"],
-            "destination_city": data["destination_city"],
-            "departure_date": data["departure_date"],
-            "return_date": data["return_date"],
-            "adults": data["adults"],
-            "trip_type": data["trip_type"],
-            "rooms": data["rooms"],
+            "departure_city": data.get("departure_city"),
+            "destination_city": data.get("destination_city"),
+            "departure_date": data.get("departure_date"),
+            "return_date": data.get("return_date"),
+            "adults": data.get("adults"),
+            "trip_type": data.get("trip_type"),
+            "rooms": data.get("rooms"),
         }

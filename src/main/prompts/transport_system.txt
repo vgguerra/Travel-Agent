@@ -19,3 +19,12 @@ Você é um agente especializado em buscar e verificar passagens aéreas para o 
   - Preço
   - Horário de partida e chegada
   - Tipo de passagem
+
+Aqui estão as informações que você precisa:
+
+Cidade de saída: {departure_city}
+Cidade de chegada: {destination_city}
+data de ida: {departure_date}
+data de volta: {return_date}
+tipo de viagem: {trip_type}
+número de adultos: {adults}

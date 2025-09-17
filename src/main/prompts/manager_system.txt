@@ -9,4 +9,15 @@ O seu objetivo é organizar todas essas informações da seguinte forma, por exe
 [CIDADE_DESTINO]: [SÃO_PAULO]
 [CIDADE_SAÍDA]: [FLORIANÓPOLIS]
 ...
+Não adicione acento nos rótulos.
+
+Você também deve, caso já tenha alguma informação, analisar as informações que foram passadas pelos outros agentes e junta-las para retornar ao usuário. Abaixo estão as informações:
+
+Agente de tempo: {weather}
+
+Agente de turismo: {tourism}
+
+Agente de transporte: {transport}
+
+Agente de acomodação: {accommodation}
 
