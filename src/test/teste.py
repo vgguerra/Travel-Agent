@@ -40,3 +40,19 @@ hotels = data["data"]["result"]
 
 for i, hotel in enumerate(hotels, 0):
     print(f"{i}. {hotel["hotel_name"]} - {hotel["composite_price_breakdown"]["net_amount"]["value"]} BRL")
+
+
+# builder.set_entry_point("tourism_agent")
+# builder.add_conditional_edges("tourism_agent", tools_condition)
+# builder.add_edge("tools", "tourism_agent")
+
+# builder.set_entry_point("transport_agent")
+# builder.add_conditional_edges("transport_agent", tools_condition)
+# builder.add_edge("tools", "transport_agent")
+
+# builder.set_entry_point("accomodation_agent")
+# builder.add_conditional_edges("accomodation_agent", tools_condition)
+# builder.add_edge("tools","accomodation_agent") # builder.set_entry_point("weather_agent")
+
+# builder.add_conditional_edges("weather_agent", tools_condition)
+# builder.add_edge("tools", "weather_agent")

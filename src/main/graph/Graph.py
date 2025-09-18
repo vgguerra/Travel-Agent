@@ -8,7 +8,7 @@ from src.main.agents.state.AgentState import AgentState
 
 class Graph:
 
-    def __init__(self, agents: dict[str, BaseAgent], tools: list):
+    def __init__(self, agents: dict[str, BaseAgent], tools: dict):
         self.agents = agents
         self.tools = tools
 
@@ -26,10 +26,10 @@ class Graph:
         ]
 
         required_fields2 = [
-            state["weather"],
+            # state["weather"],
             state["tourism"],
-            state["transport"],
-            state["accommodation"]
+            # state["transport"],
+            # state["accommodation"]
         ]
 
         if any(v is None for v in required_fields):
@@ -40,6 +40,15 @@ class Graph:
 
         return "ready"
 
+
+    @staticmethod
+    def _tourism_condition(state: AgentState):
+        last_message = state["messages"][-1]
+
+        if last_message.tool_calls:
+            return "tourism_tools"
+        return "manager_agent"
+
     def build_graph(self):
 
         builder = StateGraph(AgentState)
@@ -47,36 +56,33 @@ class Graph:
         for name, agent in self.agents.items():
             builder.add_node(name, agent.call)
 
-        builder.add_node("tools",ToolNode(self.tools))
+        builder.add_node("tools",ToolNode(self.tools["tourism"]))
+        #
+        # builder.set_entry_point("manager_agent")
+        #
+        # builder.add_conditional_edges("manager_agent",self._check_required_fields,{
+        #     "end": "__end__",
+        #     "ready": "tourism_agent",
+        # })
+        #
+        # builder.add_conditional_edges("tourism_agent", self._tourism_condition,{
+        #     "tourism_tools": "tourism_tools",
+        #     "manager_agent": "manager_agent"
+        # })
+        # builder.add_edge("tourism_tools", "tourism_agent")
 
-        builder.set_entry_point("manager_agent")
-
-        builder.add_conditional_edges(
-            "manager_agent",
-            self._check_required_fields,
-            {
-                "end": "__end__",
-                "ready": "tourism_agent",
-            },
-        )
-
-        builder.add_edge("tourism_agent", "accomodation_agent")
-        builder.add_edge("accomodation_agent", "transport_agent")
-        builder.add_edge("transport_agent", "weather_agent")
-        builder.add_edge("weather_agent", "manager_agent")
-
-        # builder.set_entry_point("tourism_agent")
-        # builder.add_conditional_edges("tourism_agent", tools_condition)
-        # builder.add_edge("tools", "tourism_agent")
+        builder.set_entry_point("tourism_agent")
+        builder.add_conditional_edges("tourism_agent",tools_condition)
+        builder.add_edge("tools","tourism_agent")
 
         # builder.set_entry_point("transport_agent")
         # builder.add_conditional_edges("transport_agent", tools_condition)
         # builder.add_edge("tools", "transport_agent")
-
+        #
         # builder.set_entry_point("accomodation_agent")
         # builder.add_conditional_edges("accomodation_agent", tools_condition)
         # builder.add_edge("tools","accomodation_agent")
-
+        #
         # builder.set_entry_point("weather_agent")
         # builder.add_conditional_edges("weather_agent", tools_condition)
         # builder.add_edge("tools", "weather_agent")

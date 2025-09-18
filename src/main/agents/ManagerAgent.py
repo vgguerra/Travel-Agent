@@ -7,8 +7,8 @@ class ManagerAgent(BaseAgent):
     def _capture_data(input_text: str) -> dict:
         data = {}
 
-        if "[CIDADE_SAÍDA]:" in input_text:
-            data["departure_city"] = input_text.split("[CIDADE_SAÍDA]:")[1].split("[")[1].split("]")[0]
+        if "[CIDADE_SAIDA]:" in input_text:
+            data["departure_city"] = input_text.split("[CIDADE_SAIDA]:")[1].split("[")[1].split("]")[0]
 
         if "[CIDADE_DESTINO]:" in input_text:
             data["destination_city"] = input_text.split("[CIDADE_DESTINO]:")[1].split("[")[1].split("]")[0]

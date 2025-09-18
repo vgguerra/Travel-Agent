@@ -70,7 +70,12 @@ class App:
         }
 
         # Ir adicionando as ferramentas conforme o sistema for aumentando
-        all_tools: list = weather_tools + accomodation_tools + transport_tools + tourism_tools
+        all_tools: dict = {
+            "weather": weather_tools,
+            "accomodation": accomodation_tools,
+            "transport": transport_tools,
+            "tourism": tourism_tools,
+        }
 
         run = TravelAgentSystem(agents,all_tools)
 
