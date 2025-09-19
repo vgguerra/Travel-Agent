@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from src.main.TravelAgentSystem import TravelAgentSystem
 from src.main.agents.AccomodationAgent import AccomodationAgent
+from src.main.agents.ConversationalAgent import ConversationalAgent
 from src.main.agents.TourismAgent import TourismAgent
 from src.main.agents.TransportAgent import TransportAgent
 from src.main.agents.WeatherAgent import WeatherAgent
@@ -61,12 +62,17 @@ class App:
         managerAgent = ManagerAgent(LLM)
         managerAgent.set_prompt("./prompts/manager_system.txt")
 
+        # Conversational Agent
+        conversationalAgent = ConversationalAgent(LLM)
+        conversationalAgent.set_prompt("./prompts/conversational_system.txt")
+
         agents = {
             "weather_agent": weatherAgent,
             "accomodation_agent": accomodationAgent,
             "transport_agent": transportAgent,
             "tourism_agent": tourismAgent,
             "manager_agent": managerAgent,
+            "conversational_agent": conversationalAgent,
         }
 
         # Ir adicionando as ferramentas conforme o sistema for aumentando
