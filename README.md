@@ -128,15 +128,3 @@ Assegure-se de que as chaves em `.env` estejam preenchidas.
 
 - Não inclua chaves secretas no repositório. Use `.env` e variáveis de ambiente em CI.
 - Valide e sanitize entradas antes de enviar para APIs externas quando necessário.
-
-## Licença
-
-Adicionar a licença desejada (por exemplo, MIT) na raiz do projeto.
-
-## Contato
-
-Abra uma issue no repositório para dúvidas, sugestões ou relatórios de bugs.
-
----
-
-Se quiser, eu também posso gerar um `requirements.txt` baseado nas importações do código e adicionar instruções de execução dos testes ao README. Quer que eu faça isso agora? 
