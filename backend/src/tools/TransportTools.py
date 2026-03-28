@@ -1,6 +1,5 @@
 import os
 
-from amadeus import Client, ResponseError
 from dotenv import load_dotenv
 from langchain_core.tools import tool
 from datetime import datetime

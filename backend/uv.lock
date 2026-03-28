@@ -949,7 +949,7 @@ wheels = [
 ]
 
 [[package]]
-name = "travel-agent"
+name = "travel-agent-backend"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

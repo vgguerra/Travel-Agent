@@ -3,8 +3,8 @@ import uuid
 
 from langchain_core.messages import HumanMessage
 
-from src.main.agents.BaseAgent import BaseAgent
-from src.main.graph.Graph import Graph
+from src.agents.BaseAgent import BaseAgent
+from src.graph.Graph import Graph
 
 
 class TravelAgentSystem:

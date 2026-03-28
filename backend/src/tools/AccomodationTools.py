@@ -1,5 +1,4 @@
 import requests
-from amadeus import Client
 from geopy import Nominatim
 from langchain_core.tools import tool
 from dotenv import load_dotenv

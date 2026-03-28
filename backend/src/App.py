@@ -1,22 +1,23 @@
+import os
+import uvicorn
 from dotenv import load_dotenv
 from langchain_ollama import ChatOllama
-from src.main.TravelAgentSystem import TravelAgentSystem
-from src.main.agents.AccomodationAgent import AccomodationAgent
-from src.main.agents.ConversationalAgent import ConversationalAgent
-from src.main.agents.TourismAgent import TourismAgent
-from src.main.agents.TransportAgent import TransportAgent
-from src.main.agents.WeatherAgent import WeatherAgent
-from src.main.agents.ManagerAgent import ManagerAgent
-from src.main.tools.AccomodationTools import AccomodationTools
-from src.main.tools.TourismTools import TourismTools
-from src.main.tools.TransportTools import TransportTools
-from src.main.tools.WeatherTools import WeatherTools
+from src.TravelAgentSystem import TravelAgentSystem
+from src.agents.AccomodationAgent import AccomodationAgent
+from src.agents.ConversationalAgent import ConversationalAgent
+from src.agents.TourismAgent import TourismAgent
+from src.agents.TransportAgent import TransportAgent
+from src.agents.WeatherAgent import WeatherAgent
+from src.agents.ManagerAgent import ManagerAgent
+from src.tools.AccomodationTools import AccomodationTools
+from src.tools.TourismTools import TourismTools
+from src.tools.TransportTools import TransportTools
+from src.tools.WeatherTools import WeatherTools
 
 load_dotenv()
 
-# Local LLM via Ollama — no API key required
 LLM = ChatOllama(
-    model="llama3.2",
+    model=os.getenv("OLLAMA_MODEL", "llama3.2"),
     temperature=0.3,
     num_predict=2048,
 )
@@ -29,7 +30,6 @@ class App:
 
     @staticmethod
     def build_agents():
-        # Tools
         weather = WeatherTools()
         weather_tools = [weather.getWeather]
 
@@ -42,8 +42,7 @@ class App:
         tourism = TourismTools()
         tourism_tools = [tourism.getTourismIdeas]
 
-        # Agents
-        base_prompt_path = "./src/main/prompts"
+        base_prompt_path = "./src/prompts"
 
         weatherAgent = WeatherAgent(LLM, weather_tools)
         weatherAgent.set_prompt(f"{base_prompt_path}/weather_system.txt")
@@ -82,12 +81,22 @@ class App:
         return agents, all_tools
 
     @staticmethod
-    def main():
+    def serve():
+        """Start the FastAPI server."""
+        uvicorn.run(
+            "src.api.server:app",
+            host=os.getenv("HOST", "0.0.0.0"),
+            port=int(os.getenv("PORT", "8000")),
+            reload=os.getenv("RELOAD", "true").lower() == "true",
+        )
+
+    @staticmethod
+    def cli():
+        """Start the interactive CLI mode."""
         agents, all_tools = App.build_agents()
         run = TravelAgentSystem(agents, all_tools)
         run.cli_mode()
 
 
 if __name__ == "__main__":
-    app = App()
-    app.main()
+    App.serve()

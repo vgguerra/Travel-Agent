@@ -1,4 +1,4 @@
-from src.main.agents.BaseAgent import BaseAgent
+from src.agents.BaseAgent import BaseAgent
 
 
 class ManagerAgent(BaseAgent):

@@ -1,5 +1,5 @@
-from src.main.agents.BaseAgent import BaseAgent
-from src.main.agents.state.AgentState import AgentState
+from src.agents.BaseAgent import BaseAgent
+from src.agents.state.AgentState import AgentState
 
 
 class WeatherAgent(BaseAgent):

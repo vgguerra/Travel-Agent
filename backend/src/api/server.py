@@ -1,7 +1,7 @@
 """
-FastAPI server that exposes the Travel Agent multi-agent system as a REST API.
-Run from the backend/ directory:
-  uv run uvicorn src.main.api.server:app --reload --port 8000
+FastAPI server for the Travel Agent multi-agent system.
+Started automatically by App.py:  uv run python -m src.App
+Or directly:                       uv run uvicorn src.api.server:app --reload --port 8000
 """
 
 import datetime
@@ -12,11 +12,10 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import HumanMessage
-from langchain_ollama import ChatOllama
 from pydantic import BaseModel
 
-from src.main.App import App
-from src.main.TravelAgentSystem import TravelAgentSystem
+from src.App import App
+from src.TravelAgentSystem import TravelAgentSystem
 
 # ---------------------------------------------------------------------------
 # Pydantic models

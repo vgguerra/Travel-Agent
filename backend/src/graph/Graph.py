@@ -3,8 +3,8 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from src.main.agents.BaseAgent import BaseAgent
-from src.main.agents.state.AgentState import AgentState
+from src.agents.BaseAgent import BaseAgent
+from src.agents.state.AgentState import AgentState
 
 
 class Graph:
