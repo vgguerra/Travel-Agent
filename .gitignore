@@ -155,11 +155,17 @@ cython_debug/
 
 
 .ruff_cache/
-
-
 .idea
 
+# Backend
+backend/.venv/
+backend/__pycache__/
+backend/.env
 
-/src/Qdrant_notebooks/startup_vectors.npy
-/src/Qdrant_notebooks/startups_demo.json
-/src/Qdrant_search_app/retriever/ren1000.npy
+# Frontend
+frontend/.next/
+frontend/node_modules/
+frontend/.env.local
+
+# Logs
+*.log

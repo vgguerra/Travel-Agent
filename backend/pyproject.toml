@@ -1,0 +1,16 @@
+[project]
+name = "travel-agent-backend"
+version = "0.1.0"
+description = "Travel Agent multi-agent system with local LLM via Ollama"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.135.2",
+    "geopy>=2.4.1",
+    "langchain-core>=1.2.23",
+    "langchain-ollama>=1.0.1",
+    "langfuse>=4.0.1",
+    "langgraph>=1.1.3",
+    "python-dotenv>=1.2.2",
+    "requests>=2.33.0",
+    "uvicorn[standard]>=0.42.0",
+]
