@@ -1,5 +1,4 @@
 import os
-import uvicorn
 from dotenv import load_dotenv
 from langchain_ollama import ChatOllama
 from src.TravelAgentSystem import TravelAgentSystem
@@ -81,22 +80,8 @@ class App:
         return agents, all_tools
 
     @staticmethod
-    def serve():
-        """Start the FastAPI server."""
-        uvicorn.run(
-            "src.api.server:app",
-            host=os.getenv("HOST", "0.0.0.0"),
-            port=int(os.getenv("PORT", "8000")),
-            reload=os.getenv("RELOAD", "true").lower() == "true",
-        )
-
-    @staticmethod
     def cli():
         """Start the interactive CLI mode."""
         agents, all_tools = App.build_agents()
         run = TravelAgentSystem(agents, all_tools)
         run.cli_mode()
-
-
-if __name__ == "__main__":
-    App.serve()
