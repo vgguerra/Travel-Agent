@@ -1,130 +1,119 @@
-# Travel-Agent
+# Travel Agent IA
 
-## Propósito
+Assistente de viagem multi-agente com LLM local (Ollama). Planeje voos, hotéis, clima e atrações em uma conversa natural.
 
-O Travel-Agent é um sistema modular de agentes especializados para planejar viagens de forma assistida por LLMs. O objetivo é orquestrar múltiplos agentes — clima, transporte, hospedagem, turismo, orçamento e conversação — combinando informações de APIs externas e raciocínio de modelos para produzir roteiros, recomendações e respostas conversacionais.
+## Arquitetura
 
-## Visão geral da arquitetura
+```
+Travel-Agent/
+├── backend/          Python · FastAPI · LangGraph · Ollama
+│   └── src/main/
+│       ├── agents/   WeatherAgent, TourismAgent, TransportAgent, AccomodationAgent, ManagerAgent, ConversationalAgent
+│       ├── tools/    Wrappers para OpenWeatherMap, TripAdvisor, Booking.com
+│       ├── prompts/  System prompts de cada agente
+│       ├── graph/    Orquestração LangGraph (StateGraph)
+│       └── api/      FastAPI REST server
+└── frontend/         Next.js 16 · TypeScript · Tailwind · Framer Motion
+```
 
-- Orquestrador: `TravelAgentSystem` responsável por receber requisições e rotear para agentes apropriados.
-- Agentes: componentes especializados que expõem lógica de domínio e usam prompts + ferramentas para realizar tarefas. Exemplos:
-  - `WeatherAgent` (previsão do tempo)
-  - `AccomodationAgent` (hospedagem)
-  - `TransportAgent` (voos/transporte)
-  - `TourismAgent` (atividades/turismo)
-  - `BudgetAgent` (cálculo de custos)
-  - `ConversationalAgent` / `ManagerAgent` (gestão de diálogo e fluxo)
-- Ferramentas: wrappers para APIs externas localizadas em `src/main/tools/`.
-- Prompts: textos base que guiam o comportamento dos agentes em `src/main/prompts/`.
-- Interface: CLI principal em `src/main/App.py` e interface opcional via Gradio em `src/main/interface/GradioUI.py`.
+**Fluxo:** Usuário → ManagerAgent (extrai parâmetros) → WeatherAgent / TourismAgent / TransportAgent / AccomodationAgent → ConversationalAgent (síntese) → Resposta
 
-Arquitetura rápida (fluxo): Requisição -> `TravelAgentSystem` -> Router -> Agentes -> Ferramentas/APIs -> Resultado/Itinerário.
+## Pré-requisitos
 
-## Estrutura do projeto
+- [Ollama](https://ollama.com) instalado e rodando
+- Python 3.12+ com [uv](https://docs.astral.sh/uv/)
+- Node.js 18+
 
-- [src/main/App.py](src/main/App.py) — ponto de entrada que instância LLM, agentes e ferramentas
-- [src/main/TravelAgentSystem.py](src/main/TravelAgentSystem.py) — orquestrador/router
-- [src/main/agents/](src/main/agents/) — agentes especializados
-- [src/main/tools/](src/main/tools/) — integrações com APIs externas (requests)
-- [src/main/prompts/](src/main/prompts/) — arquivos de prompt por agente
-- [src/main/interface/GradioUI.py](src/main/interface/GradioUI.py) — interface Gradio (chat)
-- [src/test/](src/test/) — scripts de teste e exemplos
+## Instalação
 
-## Funcionalidades principais
-
-- Geração de roteiros personalizados com base em destino, orçamento e preferências
-- Requisições paralelas a serviços externos via ferramentas
-- Uso de LLMs para interpretar pedidos, gerar recomendações e manter contexto de diálogo
-- Extensibilidade: adicionar novos agentes e ferramentas facilmente
-
-## Requisitos e dependências sugeridas
-
-- Python 3.8 ou superior
-- Principais bibliotecas usadas no projeto (instalar conforme necessidade):
+### 1. Ollama + modelo
 
 ```bash
-pip install -r requirements.txt
+# Instalar Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Baixar modelo (llama3.2 ~2GB)
+ollama pull llama3.2
+
+# Iniciar servidor
+ollama serve
 ```
 
-Exemplo de dependências recomendadas (crie `requirements.txt` com):
-
-```
-gradio
-requests
-python-dotenv
-langchain_core
-langfuse
-langchain-google-genai
-```
-
-Observação: nomes e pacotes do ecossistema LangChain / provedores de LLM podem variar; ajuste conforme provedor.
-
-## Configuração
-
-1. Copie/Crie um arquivo `.env` na raiz do projeto com as chaves necessárias. Exemplo:
-
-```
-GOOGLE_API_KEY=your_google_api_key
-RAPID_KEY=your_rapidapi_key
-```
-
-2. Configure variáveis específicas do provedor (se estiver usando Google Generative, OpenAI etc.).
-
-## Instalação rápida
+### 2. Backend
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+cd backend
+
+# Instalar dependências
+uv sync
+
+# Copiar e preencher variáveis de ambiente
+cp .env.example .env
+# Editar .env com suas chaves de API
+
+# Iniciar servidor FastAPI
+uv run uvicorn src.main.api.server:app --reload --port 8000
 ```
 
-Se não tiver `requirements.txt`, instale manualmente as dependências mostradas acima.
+O servidor estará disponível em `http://localhost:8000`.
+Documentação interativa: `http://localhost:8000/docs`
 
-## Como executar
-
-- Executar o aplicativo principal (CLI):
+### 3. Frontend
 
 ```bash
-python src/main/App.py
+cd frontend
+
+npm install
+npm run dev
 ```
 
-- Iniciar a interface Gradio (chat) — exemplo de uso integrado em `src/main/interface/GradioUI.py`:
+Acesse `http://localhost:3000`.
+
+## Variáveis de ambiente (backend/.env)
+
+| Variável | Descrição | Obrigatório |
+|----------|-----------|-------------|
+| `API_KEY` | OpenWeatherMap API key | Sim (para clima) |
+| `RAPID_KEY` | RapidAPI key (TripAdvisor/Booking) | Sim (para voos/hotéis) |
+| `RAPID_HOST` | RapidAPI host | Sim |
+| `OLLAMA_HOST` | URL do Ollama (default: `http://localhost:11434`) | Não |
+
+## API REST
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/health` | Health check |
+| `POST` | `/api/chat` | Enviar mensagem ao agente |
+| `DELETE` | `/api/session/{id}` | Limpar sessão |
+
+### Exemplo de request
 
 ```bash
-# Abra um REPL ou script que importe e chame `gradio_interface_run(agent_talk)`
-python src/main/interface/GradioUI.py
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Quero viajar de São Paulo para Florianópolis em julho"}'
 ```
-
-Detalhe: `src/main/App.py` já configura LLM (ex.: `langchain_google_genai.ChatGoogleGenerativeAI`) e registra prompts e ferramentas.
-
-## Execução de testes simples
-
-Alguns scripts de exemplo que usam `requests` e RapidAPI:
-
-```bash
-python src/test/tourism_test.py
-python src/test/transport_test.py
-```
-
-Assegure-se de que as chaves em `.env` estejam preenchidas.
-
-## Desenvolvimento e contribuição
-
-- Abra uma issue para discutir features ou bugs
-- Fork + branch com descrição: `feature/<nome>` ou `fix/<descrição>`
-- Faça PR com testes quando possível
-- Mantenha estilo do código e mensagens de commit claras
 
 ## Estendendo o sistema
 
-- Adicionar um novo agente:
-  1. Criar arquivo em `src/main/agents/` com uma classe que herde de `BaseAgent`.
-  2. Adicionar prompts em `src/main/prompts/` e ferramentas em `src/main/tools/` se necessário.
-  3. Registrar o agente em `src/main/App.py` e no dict de `agents` do `TravelAgentSystem`.
+### Novo agente
 
-- Adicionar nova ferramenta: criar wrapper em `src/main/tools/` que retorne dados processáveis.
+1. Criar `backend/src/main/agents/MeuAgente.py` herdando de `BaseAgent`
+2. Adicionar prompt em `backend/src/main/prompts/`
+3. Registrar em `App.build_agents()` e conectar no grafo `Graph.build_graph()`
 
-## Segurança e privacidade
+### Nova ferramenta
 
-- Não inclua chaves secretas no repositório. Use `.env` e variáveis de ambiente em CI.
-- Valide e sanitize entradas antes de enviar para APIs externas quando necessário.
+1. Criar wrapper em `backend/src/main/tools/` usando `@tool` do LangChain
+2. Passar para o agente correspondente no `App.build_agents()`
+
+## Agentes disponíveis
+
+| Agente | Responsabilidade |
+|--------|-----------------|
+| `ManagerAgent` | Extrai parâmetros da viagem da linguagem natural |
+| `WeatherAgent` | Previsão do tempo via OpenWeatherMap |
+| `TourismAgent` | Atrações e atividades via TripAdvisor |
+| `TransportAgent` | Voos via TripAdvisor RapidAPI |
+| `AccomodationAgent` | Hotéis via Booking.com RapidAPI |
+| `ConversationalAgent` | Sintetiza todos os resultados em resposta final |
