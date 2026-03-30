@@ -16,7 +16,7 @@ from src.tools.WeatherTools import WeatherTools
 load_dotenv()
 
 LLM = ChatOllama(
-    model=os.getenv("OLLAMA_MODEL", "llama3.2"),
+    model=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
     temperature=0.3,
     num_predict=2048,
 )
