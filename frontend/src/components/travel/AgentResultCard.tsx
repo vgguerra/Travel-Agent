@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 import { Cloud, TreePalm, Plane, Hotel, LucideIcon } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Props {
   type: "weather" | "tourism" | "transport" | "accommodation";
@@ -55,9 +57,11 @@ export function AgentResultCard({ type, content }: Props) {
           {cfg.label}
         </span>
       </div>
-      <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">
-        {content}
-      </p>
+      <div className="prose-chat text-white/80 text-sm">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {content}
+        </ReactMarkdown>
+      </div>
     </motion.div>
   );
 }

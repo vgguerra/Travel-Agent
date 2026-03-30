@@ -3,6 +3,8 @@
 import { ChatMessage } from "@/types/travel";
 import { Bot, User } from "lucide-react";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Props {
   message: ChatMessage;
@@ -37,7 +39,15 @@ export function MessageBubble({ message }: Props) {
             : "bg-white/10 backdrop-blur-sm text-white border border-white/10 rounded-tl-sm"
           }`}
       >
-        <p className="whitespace-pre-wrap">{message.content}</p>
+        {isUser ? (
+          <p className="whitespace-pre-wrap">{message.content}</p>
+        ) : (
+          <div className="prose-chat">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {message.content}
+            </ReactMarkdown>
+          </div>
+        )}
         <p
           className={`mt-1.5 text-[10px] ${
             isUser ? "text-sky-100/70 text-right" : "text-white/40"
