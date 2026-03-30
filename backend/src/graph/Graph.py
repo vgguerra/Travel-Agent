@@ -1,4 +1,4 @@
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
@@ -42,10 +42,25 @@ class Graph:
 
     @staticmethod
     def _has_tool_call(state: AgentState, tool_name: str) -> bool:
-        """Check only the LAST message for a specific tool call."""
-        last_msg = state["messages"][-1]
+        """Check LAST message for a tool call. Only allow if tool hasn't been executed yet."""
+        msgs = state["messages"]
+        last_msg = msgs[-1]
+
+        # If last message is AI with the desired tool call
         if isinstance(last_msg, AIMessage) and last_msg.tool_calls:
-            return any(call["name"] == tool_name for call in last_msg.tool_calls)
+            has_call = any(call["name"] == tool_name for call in last_msg.tool_calls)
+            if not has_call:
+                return False
+
+            # Check if this tool was already called (ToolMessage exists in recent messages)
+            # This prevents infinite retry loops
+            for msg in reversed(msgs[:-1]):
+                if isinstance(msg, ToolMessage) and msg.name == tool_name:
+                    return False  # Already called once, don't loop
+                if isinstance(msg, AIMessage):
+                    break  # Only look back to the previous AI message
+
+            return True
         return False
 
     @staticmethod
@@ -93,28 +108,28 @@ class Graph:
             "ready": "weather_agent",
         })
 
-        # Weather → (tool loop) → Tourism
+        # Weather: agent → tool → agent (interpret) → next
         builder.add_conditional_edges("weather_agent", self._weather_condition, {
             "weather_tools": "weather_tools",
             "tourism_agent": "tourism_agent",
         })
         builder.add_edge("weather_tools", "weather_agent")
 
-        # Tourism → (tool loop) → Transport
+        # Tourism: agent → tool → agent (interpret) → next
         builder.add_conditional_edges("tourism_agent", self._tourism_condition, {
             "tourism_tools": "tourism_tools",
             "transport_agent": "transport_agent",
         })
         builder.add_edge("tourism_tools", "tourism_agent")
 
-        # Transport → (tool loop) → Accommodation
+        # Transport: agent → tool → agent (interpret) → next
         builder.add_conditional_edges("transport_agent", self._transport_condition, {
             "transport_tools": "transport_tools",
             "accomodation_agent": "accomodation_agent",
         })
         builder.add_edge("transport_tools", "transport_agent")
 
-        # Accommodation → (tool loop) → back to Manager (which routes to conversational)
+        # Accommodation: agent → tool → agent (interpret) → back to manager
         builder.add_conditional_edges("accomodation_agent", self._accomodation_condition, {
             "accomodation_tools": "accomodation_tools",
             "manager_agent": "manager_agent",

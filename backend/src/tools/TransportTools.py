@@ -7,8 +7,6 @@ import requests
 
 load_dotenv()
 
-# TODO: Adicionar a feature de retornar os voos mais detalhadamente, fornecendo o itinerário, conexões, etc.
-
 url = "https://tripadvisor16.p.rapidapi.com/api/v1/flights/searchFlights"
 
 class TransportTools:
@@ -33,7 +31,7 @@ class TransportTools:
 
         Args:
             departure_city (str): IATA code of the origin airport (e.g., 'GRU').
-            arrival_city (str): IATA code of the destination airport (e.g., 'LON').
+            arrival_city (str): IATA code of the destination airport (e.g., 'GIG').
             date (str): Departure date in format 'YYYY-MM-DD'.
             itinerary_type (str): Type of trip ('ONE_WAY' or 'ROUND_TRIP').
             adults (int): Number of adult passengers.
@@ -47,16 +45,17 @@ class TransportTools:
 
         allowed_classes = ["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]
         if class_type not in allowed_classes:
-            raise ValueError(f"class_type inválido. Escolha entre: {', '.join(allowed_classes)}")
+            return f"Erro: class_type inválido. Escolha entre: {', '.join(allowed_classes)}"
 
         def validate_date(date_str):
             try:
                 datetime.strptime(date_str, "%Y-%m-%d")
             except ValueError:
-                raise ValueError(f"Data inválida: {date_str}. Use o formato YYYY-MM-DD.")
+                return False
+            return True
 
-        validate_date(date)
-
+        if not validate_date(date):
+            return f"Erro: Data inválida: {date}. Use o formato YYYY-MM-DD."
 
         querystring = {
             "sourceAirportCode": departure_city,
@@ -74,7 +73,8 @@ class TransportTools:
         }
 
         if return_date:
-            validate_date(return_date)
+            if not validate_date(return_date):
+                return f"Erro: Data de retorno inválida: {return_date}. Use o formato YYYY-MM-DD."
             querystring["returnDate"] = return_date
 
         headers = {
@@ -82,32 +82,31 @@ class TransportTools:
             "x-rapidapi-host": "tripadvisor16.p.rapidapi.com"
         }
 
-        response = requests.get(url, headers=headers, params=querystring)
-        response.raise_for_status()
+        try:
+            response = requests.get(url, headers=headers, params=querystring, timeout=15)
+            response.raise_for_status()
+            data = response.json()
 
-        flights = response.json().get("data", {}).get("flights", [])
+            if not data.get("status", True):
+                return "A API de voos está temporariamente indisponível. Não foi possível buscar passagens aéreas no momento."
 
-        results = []
-        for i, flight in enumerate(flights, start=1):
-            price = flight["purchaseLinks"][0]['totalPrice']
-            results.append({
-                "index": i,
-                "price": price,
-                "details": flight
-            })
+            flights = data.get("data", {}).get("flights", [])
+            if not flights:
+                return "Nenhum voo encontrado para os critérios informados."
 
-        return results
+            results = []
+            for i, flight in enumerate(flights[:10], start=1):
+                price = flight["purchaseLinks"][0]["totalPrice"]
+                results.append({
+                    "index": i,
+                    "price": price,
+                    "details": flight
+                })
+            return results
 
-
-if __name__ == "__main__":
-    tools = TransportTools()
-    teste = tools.getFlights(
-        departure_city="GRU",
-        arrival_city="LON",
-        date="2025-11-01",
-        itinerary_type="ONE_WAY",
-        adults=1,
-        class_type="ECONOMY",
-    )
-
-    print(teste)
+        except requests.exceptions.Timeout:
+            return "A busca de voos excedeu o tempo limite. Tente novamente mais tarde."
+        except requests.exceptions.RequestException as e:
+            return f"Erro ao buscar voos: serviço temporariamente indisponível."
+        except Exception as e:
+            return f"Erro inesperado ao buscar voos: {str(e)}"
