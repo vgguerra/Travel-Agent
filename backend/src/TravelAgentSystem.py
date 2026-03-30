@@ -38,17 +38,6 @@ class TravelAgentSystem:
             state_input = {
                 "messages": [HumanMessage(content=user_input)],
                 "today": str(datetime.date.today()),
-                "weather": None,
-                "tourism": None,
-                "transport": None,
-                "accommodation": None,
-                "departure_city": None,
-                "destination_city": None,
-                "departure_date": None,
-                "return_date": None,
-                "adults": None,
-                "trip_type": None,
-                "rooms": None,
             }
 
             response = assistant.invoke(state_input, config=config)

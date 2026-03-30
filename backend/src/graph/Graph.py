@@ -16,20 +16,20 @@ class Graph:
     @staticmethod
     def _manager_condition(state: AgentState):
         required_fields = [
-            state["departure_city"],
-            state["destination_city"],
-            state["departure_date"],
-            state["return_date"],
-            state["adults"],
-            state["trip_type"],
-            state["rooms"],
+            state.get("departure_city"),
+            state.get("destination_city"),
+            state.get("departure_date"),
+            state.get("return_date"),
+            state.get("adults"),
+            state.get("trip_type"),
+            state.get("rooms"),
         ]
 
         results = [
-            state["weather"],
-            state["tourism"],
-            state["transport"],
-            state["accommodation"],
+            state.get("weather"),
+            state.get("tourism"),
+            state.get("transport"),
+            state.get("accommodation"),
         ]
 
         if any(v is None for v in required_fields):
@@ -41,22 +41,24 @@ class Graph:
         return "ready"
 
     @staticmethod
-    def _tourism_condition(state: AgentState):
-        for msg in state["messages"]:
-            if isinstance(msg, AIMessage) and msg.tool_calls:
-                for call in msg.tool_calls:
-                    if call["name"] == "getTourismIdeas":
-                        return "tourism_tools"
-        return "manager_agent"
+    def _has_tool_call(state: AgentState, tool_name: str) -> bool:
+        """Check only the LAST message for a specific tool call."""
+        last_msg = state["messages"][-1]
+        if isinstance(last_msg, AIMessage) and last_msg.tool_calls:
+            return any(call["name"] == tool_name for call in last_msg.tool_calls)
+        return False
 
     @staticmethod
     def _weather_condition(state: AgentState):
-        for msg in state["messages"]:
-            if isinstance(msg, AIMessage) and msg.tool_calls:
-                for call in msg.tool_calls:
-                    if call["name"] == "getWeather":
-                        return "weather_tools"
+        if Graph._has_tool_call(state, "getWeather"):
+            return "weather_tools"
         return "tourism_agent"
+
+    @staticmethod
+    def _tourism_condition(state: AgentState):
+        if Graph._has_tool_call(state, "getTourismIdeas"):
+            return "tourism_tools"
+        return "manager_agent"
 
     def build_graph(self):
         builder = StateGraph(AgentState)
@@ -74,7 +76,6 @@ class Graph:
             "ready": "weather_agent",
         })
 
-        # Weather → (tool loop) → Tourism → manager (que redireciona ao conversational)
         builder.add_conditional_edges("weather_agent", self._weather_condition, {
             "weather_tools": "weather_tools",
             "tourism_agent": "tourism_agent",

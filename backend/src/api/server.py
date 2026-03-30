@@ -123,17 +123,6 @@ async def chat(req: ChatRequest):
     state_input = {
         "messages": [HumanMessage(content=req.message)],
         "today": str(datetime.date.today()),
-        "weather": None,
-        "tourism": None,
-        "transport": None,
-        "accommodation": None,
-        "departure_city": None,
-        "destination_city": None,
-        "departure_date": None,
-        "return_date": None,
-        "adults": None,
-        "trip_type": None,
-        "rooms": None,
     }
 
     try:
