@@ -58,17 +58,34 @@ class Graph:
     def _tourism_condition(state: AgentState):
         if Graph._has_tool_call(state, "getTourismIdeas"):
             return "tourism_tools"
+        return "transport_agent"
+
+    @staticmethod
+    def _transport_condition(state: AgentState):
+        if Graph._has_tool_call(state, "getFlights"):
+            return "transport_tools"
+        return "accomodation_agent"
+
+    @staticmethod
+    def _accomodation_condition(state: AgentState):
+        if Graph._has_tool_call(state, "getAccomodation"):
+            return "accomodation_tools"
         return "manager_agent"
 
     def build_graph(self):
         builder = StateGraph(AgentState)
 
+        # Agent nodes
         for name, agent in self.agents.items():
             builder.add_node(name, agent.call)
 
-        builder.add_node("tourism_tools", ToolNode(self.tools["tourism"]))
+        # Tool nodes
         builder.add_node("weather_tools", ToolNode(self.tools["weather"]))
+        builder.add_node("tourism_tools", ToolNode(self.tools["tourism"]))
+        builder.add_node("transport_tools", ToolNode(self.tools["transport"]))
+        builder.add_node("accomodation_tools", ToolNode(self.tools["accomodation"]))
 
+        # Entry point
         builder.set_entry_point("manager_agent")
         builder.add_conditional_edges("manager_agent", self._manager_condition, {
             "end": "__end__",
@@ -76,18 +93,35 @@ class Graph:
             "ready": "weather_agent",
         })
 
+        # Weather → (tool loop) → Tourism
         builder.add_conditional_edges("weather_agent", self._weather_condition, {
             "weather_tools": "weather_tools",
             "tourism_agent": "tourism_agent",
         })
         builder.add_edge("weather_tools", "weather_agent")
 
+        # Tourism → (tool loop) → Transport
         builder.add_conditional_edges("tourism_agent", self._tourism_condition, {
             "tourism_tools": "tourism_tools",
-            "manager_agent": "manager_agent",
+            "transport_agent": "transport_agent",
         })
         builder.add_edge("tourism_tools", "tourism_agent")
 
+        # Transport → (tool loop) → Accommodation
+        builder.add_conditional_edges("transport_agent", self._transport_condition, {
+            "transport_tools": "transport_tools",
+            "accomodation_agent": "accomodation_agent",
+        })
+        builder.add_edge("transport_tools", "transport_agent")
+
+        # Accommodation → (tool loop) → back to Manager (which routes to conversational)
+        builder.add_conditional_edges("accomodation_agent", self._accomodation_condition, {
+            "accomodation_tools": "accomodation_tools",
+            "manager_agent": "manager_agent",
+        })
+        builder.add_edge("accomodation_tools", "accomodation_agent")
+
+        # Conversational → END
         builder.add_edge("conversational_agent", "__end__")
 
         memory = MemorySaver()
