@@ -54,6 +54,10 @@ class ManagerAgent(BaseAgent):
         elif output.get("trip_type") is None:
             output["trip_type"] = "IDA"
 
+        # For one-way trips, use departure_date as return_date (needed for hotel search)
+        if output.get("return_date") is None and output.get("departure_date") is not None:
+            output["return_date"] = output["departure_date"]
+
         # Default adults and rooms
         if output.get("adults") is None:
             output["adults"] = 1
