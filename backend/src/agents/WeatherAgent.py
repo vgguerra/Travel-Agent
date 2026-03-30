@@ -14,7 +14,7 @@ class WeatherAgent(BaseAgent):
             raise ValueError(f"ERROR: {e}")
 
         if self.prompt is not None:
-            prompt = self.prompt.format(**state)
+            prompt = self.prompt.format_messages(**state)
             result = chain.invoke(prompt)
         else:
             raise ValueError("No prompt given")

@@ -28,6 +28,7 @@ class TravelAgentSystem:
     def cli_mode(self):
         config = self._get_config()
         assistant = self.build_graph()
+        first_turn = True
 
         while True:
             user_input = input("Você: ")
@@ -39,6 +40,15 @@ class TravelAgentSystem:
                 "messages": [HumanMessage(content=user_input)],
                 "today": str(datetime.date.today()),
             }
+            if first_turn:
+                state_input.update({
+                    "weather": None, "tourism": None, "transport": None,
+                    "accommodation": None, "departure_city": None,
+                    "destination_city": None, "departure_date": None,
+                    "return_date": None, "adults": None, "trip_type": None,
+                    "rooms": None,
+                })
+                first_turn = False
 
             response = assistant.invoke(state_input, config=config)
             assistant_reply = response["messages"][-1]

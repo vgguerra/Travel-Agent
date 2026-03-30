@@ -12,7 +12,7 @@ class AccomodationAgent(BaseAgent):
             raise print(f"ERROR: {e}")
 
         if self.prompt is not None:
-            prompt = self.prompt.format(**state)
+            prompt = self.prompt.format_messages(**state)
             result = chain.invoke(prompt)
         else:
             raise print("No prompt given")

@@ -17,6 +17,6 @@ class AgentState(TypedDict):
     destination_city: str | None
     departure_date: str | None
     return_date: str | None
-    adults: str | None
+    adults: int | None
     trip_type: str | None
     rooms: int | None

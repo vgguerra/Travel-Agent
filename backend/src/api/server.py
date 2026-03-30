@@ -35,7 +35,7 @@ class TravelState(BaseModel):
     destination_city: Optional[str] = None
     departure_date: Optional[str] = None
     return_date: Optional[str] = None
-    adults: Optional[str] = None
+    adults: Optional[int] = None
     trip_type: Optional[str] = None
     rooms: Optional[int] = None
 
@@ -50,16 +50,31 @@ class ChatResponse(BaseModel):
 # In-memory session store
 # ---------------------------------------------------------------------------
 
+_INITIAL_STATE = {
+    "weather": None,
+    "tourism": None,
+    "transport": None,
+    "accommodation": None,
+    "departure_city": None,
+    "destination_city": None,
+    "departure_date": None,
+    "return_date": None,
+    "adults": None,
+    "trip_type": None,
+    "rooms": None,
+}
+
+
 class SessionStore:
     """Keeps one compiled graph + config per session_id."""
 
     def __init__(self):
         self._sessions: dict[str, dict] = {}
 
-    def get_or_create(self, session_id: str, agents, tools) -> tuple:
-        if session_id not in self._sessions:
+    def get_or_create(self, session_id: str, agents, tools) -> tuple[tuple, bool]:
+        is_new = session_id not in self._sessions
+        if is_new:
             system = TravelAgentSystem(agents, tools)
-            # Give each session its own thread for checkpointing
             system.thread = session_id
             graph = system.build_graph()
             self._sessions[session_id] = {
@@ -67,7 +82,7 @@ class SessionStore:
                 "config": system._get_config(),
             }
         entry = self._sessions[session_id]
-        return entry["graph"], entry["config"]
+        return (entry["graph"], entry["config"]), is_new
 
 
 sessions = SessionStore()
@@ -116,7 +131,7 @@ async def chat(req: ChatRequest):
     session_id = req.session_id or str(uuid.uuid4())
 
     try:
-        graph, config = sessions.get_or_create(session_id, _agents, _tools)
+        (graph, config), is_new = sessions.get_or_create(session_id, _agents, _tools)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to initialise session: {e}")
 
@@ -124,6 +139,8 @@ async def chat(req: ChatRequest):
         "messages": [HumanMessage(content=req.message)],
         "today": str(datetime.date.today()),
     }
+    if is_new:
+        state_input.update(_INITIAL_STATE)
 
     try:
         result = graph.invoke(state_input, config=config)

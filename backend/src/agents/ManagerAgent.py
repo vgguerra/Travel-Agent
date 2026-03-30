@@ -21,7 +21,8 @@ class ManagerAgent(BaseAgent):
     def _capture_data(cls, input_text: str) -> dict:
         data = {}
         for label, key in cls.FIELD_MAP.items():
-            match = re.search(rf"\[{label}\]:\s*\[(.+?)\]", input_text)
+            # Match [LABEL]: [VALUE] or [LABEL]: VALUE
+            match = re.search(rf"\[{label}\]:\s*\[?([^\[\]\n]+?)\]?\s*$", input_text, re.MULTILINE)
             if match:
                 value = match.group(1).strip()
                 if key in cls.INT_FIELDS:
@@ -36,9 +37,8 @@ class ManagerAgent(BaseAgent):
         if self.prompt is None:
             raise ValueError("No prompt given")
 
-        prompt = self.prompt.format(**state)
-        result = self.llm.invoke(prompt)
-
+        messages = self.prompt.format_messages(**state)
+        result = self.llm.invoke(messages)
         new_data = self._capture_data(result.content.strip())
 
         # Merge: keep existing state values, override only with newly extracted data
@@ -47,5 +47,17 @@ class ManagerAgent(BaseAgent):
             new_value = new_data.get(key)
             existing = state.get(key)
             output[key] = new_value if new_value is not None else existing
+
+        # Infer trip_type from return_date presence
+        if output.get("return_date") is not None:
+            output["trip_type"] = "IDA_VOLTA"
+        elif output.get("trip_type") is None:
+            output["trip_type"] = "IDA"
+
+        # Default adults and rooms
+        if output.get("adults") is None:
+            output["adults"] = 1
+        if output.get("rooms") is None:
+            output["rooms"] = 1
 
         return output
