@@ -15,50 +15,47 @@ export function MessageBubble({ message }: Props) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
-      className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}
     >
-      {/* Avatar */}
-      <div
-        className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center
-          ${isUser
-            ? "bg-sky-500 text-white"
-            : "bg-indigo-600 text-white"
-          }`}
-      >
-        {isUser ? <User size={18} /> : <Bot size={18} />}
-      </div>
+      {/* Avatar - assistant only */}
+      {!isUser && (
+        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-600/80 text-white flex items-center justify-center mt-0.5">
+          <Bot size={16} />
+        </div>
+      )}
 
-      {/* Bubble */}
-      <div
-        className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm
-          ${isUser
-            ? "bg-sky-500 text-white rounded-tr-sm"
-            : "bg-white/10 backdrop-blur-sm text-white border border-white/10 rounded-tl-sm"
-          }`}
-      >
+      {/* Content */}
+      <div className={isUser ? "max-w-[80%]" : "max-w-full min-w-0 flex-1"}>
         {isUser ? (
-          <p className="whitespace-pre-wrap">{message.content}</p>
+          <div className="bg-sky-500 text-white rounded-2xl rounded-tr-md px-4 py-2.5 text-sm leading-relaxed">
+            <p className="whitespace-pre-wrap">{message.content}</p>
+          </div>
         ) : (
-          <div className="prose-chat">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.content}
-            </ReactMarkdown>
+          <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl rounded-tl-md px-5 py-4">
+            <div className="prose-chat text-[14px]">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
+            </div>
           </div>
         )}
-        <p
-          className={`mt-1.5 text-[10px] ${
-            isUser ? "text-sky-100/70 text-right" : "text-white/40"
-          }`}
-        >
+        <p className={`mt-1 text-[10px] text-white/25 ${isUser ? "text-right mr-1" : "ml-1"}`}>
           {message.timestamp.toLocaleTimeString("pt-BR", {
             hour: "2-digit",
             minute: "2-digit",
           })}
         </p>
       </div>
+
+      {/* Avatar - user only */}
+      {isUser && (
+        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-sky-500/80 text-white flex items-center justify-center mt-0.5">
+          <User size={16} />
+        </div>
+      )}
     </motion.div>
   );
 }

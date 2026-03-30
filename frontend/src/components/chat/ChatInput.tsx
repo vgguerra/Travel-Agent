@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, KeyboardEvent, useRef, useEffect } from "react";
-import { SendHorizonal } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 
 interface Props {
   onSend: (message: string) => void;
@@ -12,12 +12,11 @@ export function ChatInput({ onSend, disabled }: Props) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
   }, [value]);
 
   const handleSend = () => {
@@ -35,7 +34,7 @@ export function ChatInput({ onSend, disabled }: Props) {
   };
 
   return (
-    <div className="flex items-end gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur-sm">
+    <div className="relative flex items-end gap-2 bg-white/5 border border-white/8 rounded-xl px-3 py-2.5 focus-within:border-white/15 transition-colors">
       <textarea
         ref={textareaRef}
         rows={1}
@@ -43,17 +42,17 @@ export function ChatInput({ onSend, disabled }: Props) {
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         disabled={disabled}
-        placeholder="Ex: Quero ir de São Paulo para Florianópolis em 15/07…"
-        className="flex-1 bg-transparent resize-none text-white placeholder-white/30 text-sm outline-none leading-relaxed disabled:opacity-50"
+        placeholder="Descreva sua viagem..."
+        className="flex-1 bg-transparent resize-none text-white placeholder-white/25 text-sm outline-none leading-relaxed disabled:opacity-40"
       />
       <button
         onClick={handleSend}
         disabled={disabled || !value.trim()}
         aria-label="Enviar mensagem"
-        className="flex-shrink-0 w-9 h-9 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-40
+        className="shrink-0 w-8 h-8 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30
           disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors"
       >
-        <SendHorizonal size={16} />
+        <ArrowUp size={16} strokeWidth={2.5} />
       </button>
     </div>
   );
