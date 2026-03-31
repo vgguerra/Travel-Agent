@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from src.App import App
 from src.TravelAgentSystem import TravelAgentSystem
+from src.db.migrate import run_migrations
 
 # ---------------------------------------------------------------------------
 # Pydantic models
@@ -97,6 +98,7 @@ _tools = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _agents, _tools
+    run_migrations()
     _agents, _tools = App.build_agents()
     yield
 
