@@ -18,7 +18,7 @@ def _get_connection_string() -> str:
     from urllib.parse import quote_plus
     password = quote_plus(_SUPABASE_PASSWORD)
     # Session mode pooler (port 5432) — works on WSL2 (IPv4)
-    return f"postgresql://postgres.{ref}:{password}@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
+    return f"postgresql://postgres.{ref}:{password}@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
 
 
 def run_migrations():
