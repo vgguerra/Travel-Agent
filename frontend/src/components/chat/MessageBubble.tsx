@@ -5,13 +5,23 @@ import { Bot, User } from "lucide-react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { TravelPlanMessage } from "./TravelPlanMessage";
 
 interface Props {
   message: ChatMessage;
 }
 
+function hasTravelData(message: ChatMessage): boolean {
+  if (!message.state) return false;
+  const { weather, tourism, transport, accommodation } = message.state;
+  return [weather, tourism, transport, accommodation].some(
+    (v) => v && typeof v === "string" && v.trim().length > 0
+  );
+}
+
 export function MessageBubble({ message }: Props) {
   const isUser = message.role === "user";
+  const showTravelPlan = !isUser && hasTravelData(message);
 
   return (
     <motion.div
@@ -22,7 +32,7 @@ export function MessageBubble({ message }: Props) {
     >
       {/* Avatar - assistant only */}
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-600/80 text-white flex items-center justify-center mt-0.5">
+        <div className="shrink-0 w-8 h-8 rounded-lg bg-indigo-600/80 text-white flex items-center justify-center mt-0.5">
           <Bot size={16} />
         </div>
       )}
@@ -32,6 +42,10 @@ export function MessageBubble({ message }: Props) {
         {isUser ? (
           <div className="bg-sky-500 text-white rounded-2xl rounded-tr-md px-4 py-2.5 text-sm leading-relaxed">
             <p className="whitespace-pre-wrap">{message.content}</p>
+          </div>
+        ) : showTravelPlan ? (
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl rounded-tl-md px-5 py-4">
+            <TravelPlanMessage reply={message.content} state={message.state!} />
           </div>
         ) : (
           <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl rounded-tl-md px-5 py-4">
@@ -52,7 +66,7 @@ export function MessageBubble({ message }: Props) {
 
       {/* Avatar - user only */}
       {isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-sky-500/80 text-white flex items-center justify-center mt-0.5">
+        <div className="shrink-0 w-8 h-8 rounded-lg bg-sky-500/80 text-white flex items-center justify-center mt-0.5">
           <User size={16} />
         </div>
       )}
