@@ -8,8 +8,8 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<string | null>;
-  signIn: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string, name: string, username: string) => Promise<string | null>;
+  signIn: (identifier: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 }
 
@@ -35,16 +35,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string): Promise<string | null> => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (
+    email: string,
+    password: string,
+    name: string,
+    username: string,
+  ): Promise<string | null> => {
+    // Check if username is already taken
+    const { data: existing } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username.toLowerCase())
+      .single();
+
+    if (existing) return "Este username ja esta em uso.";
+
+    // Create auth user
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: { data: { name, username: username.toLowerCase() } },
     });
-    return error?.message ?? null;
+
+    if (error) return error.message;
+
+    // Insert profile row (username → email mapping)
+    if (data.user) {
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: data.user.id,
+        username: username.toLowerCase(),
+        email,
+      });
+      if (profileError) return profileError.message;
+    }
+
+    return null;
   };
 
-  const signIn = async (email: string, password: string): Promise<string | null> => {
+  const signIn = async (identifier: string, password: string): Promise<string | null> => {
+    let email = identifier;
+
+    // If it doesn't look like an email, treat as username
+    if (!identifier.includes("@")) {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("username", identifier.toLowerCase())
+        .single();
+
+      if (error || !profile) return "Usuario nao encontrado.";
+      email = profile.email;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return error?.message ?? null;
   };

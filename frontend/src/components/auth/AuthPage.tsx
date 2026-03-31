@@ -2,20 +2,22 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, Cloud, TreePalm, Hotel, Bot, ArrowRight, Loader2 } from "lucide-react";
+import { Plane, Cloud, TreePalm, Hotel, Bot, ArrowRight, Loader2, AtSign, UserRound } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const FEATURES = [
-  { icon: Cloud, label: "Previsão do Tempo", desc: "Clima real do seu destino via OpenWeatherMap" },
-  { icon: TreePalm, label: "Roteiro Turístico", desc: "Atrações e atividades dia a dia via TripAdvisor" },
-  { icon: Plane, label: "Passagens Aéreas", desc: "Busca de voos com preços atualizados" },
-  { icon: Hotel, label: "Hospedagem", desc: "Hotéis com preços reais via Booking.com" },
+  { icon: Cloud, label: "Previsao do Tempo", desc: "Clima real do seu destino via OpenWeatherMap" },
+  { icon: TreePalm, label: "Roteiro Turistico", desc: "Atracoes e atividades dia a dia via TripAdvisor" },
+  { icon: Plane, label: "Passagens Aereas", desc: "Busca de voos com precos atualizados" },
+  { icon: Hotel, label: "Hospedagem", desc: "Hoteis com precos reais via Booking.com" },
 ];
 
 export function AuthPage() {
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +32,12 @@ export function AuthPage() {
 
     let err: string | null;
     if (mode === "signup") {
-      err = await signUp(email, password, name);
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+        setError("Username deve ter 3-20 caracteres (letras, numeros e _).");
+        setLoading(false);
+        return;
+      }
+      err = await signUp(email, password, name, username);
       if (!err) {
         setSuccess("Conta criada! Verifique seu e-mail para confirmar.");
         setMode("login");
@@ -38,7 +45,7 @@ export function AuthPage() {
         return;
       }
     } else {
-      err = await signIn(email, password);
+      err = await signIn(identifier, password);
     }
 
     if (err) setError(translateError(err));
@@ -50,6 +57,8 @@ export function AuthPage() {
     setError(null);
     setSuccess(null);
   };
+
+  const isLoginEmail = mode === "login" && identifier.includes("@");
 
   return (
     <div className="h-screen flex bg-[var(--background)] overflow-hidden">
@@ -125,29 +134,62 @@ export function AuthPage() {
               </h3>
               <p className="text-white/40 text-sm mb-6">
                 {mode === "login"
-                  ? "Entre para acessar seu assistente de viagem"
+                  ? "Entre com seu e-mail ou username"
                   : "Comece a planejar suas viagens com IA"}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-3">
                 {mode === "signup" && (
-                  <input
-                    type="text"
-                    placeholder="Seu nome"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-indigo-500/50 transition-colors"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Seu nome"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-indigo-500/50 transition-colors"
+                    />
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20">
+                        <AtSign size={15} />
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
+                        required
+                        maxLength={20}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-indigo-500/50 transition-colors"
+                      />
+                    </div>
+                    <input
+                      type="email"
+                      placeholder="E-mail"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-indigo-500/50 transition-colors"
+                    />
+                  </>
                 )}
-                <input
-                  type="email"
-                  placeholder="E-mail"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-indigo-500/50 transition-colors"
-                />
+
+                {mode === "login" && (
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20">
+                      {isLoginEmail ? <AtSign size={15} /> : <UserRound size={15} />}
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="E-mail ou username"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      required
+                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-indigo-500/50 transition-colors"
+                    />
+                  </div>
+                )}
+
                 <input
                   type="password"
                   placeholder="Senha"
@@ -200,10 +242,12 @@ export function AuthPage() {
 }
 
 function translateError(msg: string): string {
-  if (msg.includes("Invalid login")) return "E-mail ou senha incorretos.";
+  if (msg.includes("Invalid login")) return "E-mail/username ou senha incorretos.";
   if (msg.includes("already registered")) return "Este e-mail ja esta cadastrado.";
   if (msg.includes("Password should be")) return "A senha deve ter pelo menos 6 caracteres.";
   if (msg.includes("valid email")) return "Digite um e-mail valido.";
   if (msg.includes("Email not confirmed")) return "Confirme seu e-mail antes de fazer login.";
+  if (msg.includes("username")) return msg;
+  if (msg.includes("Usuario")) return msg;
   return msg;
 }
