@@ -50,26 +50,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (existing) return "Este username ja esta em uso.";
 
-    // Create auth user
-    const { data, error } = await supabase.auth.signUp({
+    // Create auth user — the DB trigger handle_new_user() auto-creates the profile row
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name, username: username.toLowerCase() } },
     });
 
-    if (error) return error.message;
-
-    // Insert profile row (username → email mapping)
-    if (data.user) {
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: data.user.id,
-        username: username.toLowerCase(),
-        email,
-      });
-      if (profileError) return profileError.message;
-    }
-
-    return null;
+    return error?.message ?? null;
   };
 
   const signIn = async (identifier: string, password: string): Promise<string | null> => {
