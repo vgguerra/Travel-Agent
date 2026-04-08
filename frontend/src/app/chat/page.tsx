@@ -42,7 +42,7 @@ export default function ChatPage() {
 
   const isEmpty = messages.length === 0;
   const hasTrip = travelState && travelState.departure_city && travelState.destination_city;
-  const userName = user.user_metadata?.name;
+  const userName = user.name;
 
   const handleSignOut = async () => {
     await signOut();
