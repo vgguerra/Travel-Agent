@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { checkUsername, resolveUsername } from "@/lib/api";
 
 interface AuthState {
   user: User | null;
@@ -41,14 +42,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name: string,
     username: string,
   ): Promise<string | null> => {
-    // Check if username is already taken
-    const { data: existing } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("username", username.toLowerCase())
-      .single();
-
-    if (existing) return "Este username ja esta em uso.";
+    // Check username via backend
+    try {
+      const { exists } = await checkUsername(username);
+      if (exists) return "Este username ja esta em uso.";
+    } catch {
+      return "Erro ao verificar username.";
+    }
 
     // Create auth user — the DB trigger handle_new_user() auto-creates the profile row
     const { error } = await supabase.auth.signUp({
@@ -63,16 +63,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (identifier: string, password: string): Promise<string | null> => {
     let email = identifier;
 
-    // If it doesn't look like an email, treat as username
+    // If it doesn't look like an email, resolve username via backend
     if (!identifier.includes("@")) {
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("username", identifier.toLowerCase())
-        .single();
-
-      if (error || !profile) return "Usuario nao encontrado.";
-      email = profile.email;
+      try {
+        const result = await resolveUsername(identifier);
+        email = result.email;
+      } catch {
+        return "Usuario nao encontrado.";
+      }
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });

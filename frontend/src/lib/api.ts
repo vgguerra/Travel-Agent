@@ -89,3 +89,36 @@ export async function renameSession(
     body: JSON.stringify({ title }),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Auth helpers (public — no token needed)
+// ---------------------------------------------------------------------------
+
+export async function checkUsername(
+  username: string
+): Promise<{ exists: boolean }> {
+  const res = await fetch(`${API_URL}/api/auth/check-username`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+
+  if (!res.ok) throw new Error(`Erro ${res.status}`);
+  return res.json();
+}
+
+export async function resolveUsername(
+  username: string
+): Promise<{ email: string }> {
+  const res = await fetch(`${API_URL}/api/auth/resolve-username`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Usuario nao encontrado");
+  }
+  return res.json();
+}
