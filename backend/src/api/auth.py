@@ -7,22 +7,35 @@ import os
 
 import jwt
 import requests as http_client
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
 from src.db import profile_service
 
+load_dotenv()
+
 _bearer = HTTPBearer()
 
-_SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-_SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
-_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 
-_AUTH_HEADERS = {
-    "apikey": _SUPABASE_ANON_KEY,
-    "Content-Type": "application/json",
-}
+def _supabase_url() -> str:
+    return os.getenv("SUPABASE_URL", "")
+
+
+def _anon_key() -> str:
+    return os.getenv("SUPABASE_ANON_KEY", "")
+
+
+def _jwt_secret() -> str:
+    return os.getenv("SUPABASE_JWT_SECRET", "")
+
+
+def _auth_headers() -> dict:
+    return {
+        "apikey": _anon_key(),
+        "Content-Type": "application/json",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -35,11 +48,11 @@ def get_current_user(
     """FastAPI dependency — returns user_id (UUID string) or raises 401."""
     token = credentials.credentials
 
-    if _JWT_SECRET:
+    if _jwt_secret():
         try:
             payload = jwt.decode(
                 token,
-                _JWT_SECRET,
+                _jwt_secret(),
                 algorithms=["HS256"],
                 audience="authenticated",
             )
@@ -52,8 +65,8 @@ def get_current_user(
 
     # Fallback: validate via Supabase REST API
     resp = http_client.get(
-        f"{_SUPABASE_URL}/auth/v1/user",
-        headers={**_AUTH_HEADERS, "Authorization": f"Bearer {token}"},
+        f"{_supabase_url()}/auth/v1/user",
+        headers={**_auth_headers(), "Authorization": f"Bearer {token}"},
         timeout=5,
     )
     if resp.status_code != 200:
@@ -96,8 +109,8 @@ class AuthTokens(BaseModel):
 
 def _supabase_signup(email: str, password: str, name: str, username: str) -> dict:
     resp = http_client.post(
-        f"{_SUPABASE_URL}/auth/v1/signup",
-        headers=_AUTH_HEADERS,
+        f"{_supabase_url()}/auth/v1/signup",
+        headers=_auth_headers(),
         json={
             "email": email,
             "password": password,
@@ -114,8 +127,8 @@ def _supabase_signup(email: str, password: str, name: str, username: str) -> dic
 
 def _supabase_signin(email: str, password: str) -> dict:
     resp = http_client.post(
-        f"{_SUPABASE_URL}/auth/v1/token?grant_type=password",
-        headers=_AUTH_HEADERS,
+        f"{_supabase_url()}/auth/v1/token?grant_type=password",
+        headers=_auth_headers(),
         json={"email": email, "password": password},
         timeout=10,
     )
@@ -128,8 +141,8 @@ def _supabase_signin(email: str, password: str) -> dict:
 
 def _supabase_refresh(refresh_token: str) -> dict:
     resp = http_client.post(
-        f"{_SUPABASE_URL}/auth/v1/token?grant_type=refresh_token",
-        headers=_AUTH_HEADERS,
+        f"{_supabase_url()}/auth/v1/token?grant_type=refresh_token",
+        headers=_auth_headers(),
         json={"refresh_token": refresh_token},
         timeout=10,
     )
