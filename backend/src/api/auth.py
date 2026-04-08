@@ -48,6 +48,7 @@ def get_current_user(
     """FastAPI dependency — returns user_id (UUID string) or raises 401."""
     token = credentials.credentials
 
+    # Try local JWT validation first
     if _jwt_secret():
         try:
             payload = jwt.decode(
@@ -58,12 +59,9 @@ def get_current_user(
             )
             return payload["sub"]
         except (jwt.InvalidTokenError, KeyError):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token invalido",
-            )
+            pass  # fall through to API validation
 
-    # Fallback: validate via Supabase REST API
+    # Validate via Supabase REST API
     resp = http_client.get(
         f"{_supabase_url()}/auth/v1/user",
         headers={**_auth_headers(), "Authorization": f"Bearer {token}"},
