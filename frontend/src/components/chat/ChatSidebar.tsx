@@ -131,14 +131,15 @@ export function ChatSidebar({
             {sessions.map((s) => {
               const isActive = s.session_id === currentSessionId;
               return (
-                <motion.button
+                <motion.div
                   key={s.session_id}
                   layout
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, height: 0 }}
                   onClick={() => onSelectSession(s.session_id)}
-                  className={`w-full group flex items-start gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
+                  role="button"
+                  className={`w-full group flex items-start gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors cursor-pointer ${
                     isActive
                       ? "bg-indigo-600/10 text-white"
                       : "text-white/50 hover:bg-white/5 hover:text-white/70"
@@ -165,7 +166,7 @@ export function ChatSidebar({
                   >
                     <Trash2 size={12} />
                   </button>
-                </motion.button>
+                </motion.div>
               );
             })}
           </AnimatePresence>

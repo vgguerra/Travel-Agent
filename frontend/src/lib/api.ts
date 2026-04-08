@@ -49,15 +49,26 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
+// Prevent parallel refresh attempts
+let _refreshPromise: Promise<boolean> | null = null;
+
+async function safeRefresh(): Promise<boolean> {
+  if (_refreshPromise) return _refreshPromise;
+  _refreshPromise = refreshTokens().finally(() => {
+    _refreshPromise = null;
+  });
+  return _refreshPromise;
+}
+
 async function authFetch(url: string, init?: RequestInit): Promise<Response> {
   let res = await fetch(url, {
     ...init,
     headers: { ...authHeaders(), ...(init?.headers ?? {}) },
   });
 
-  // If 401 and we have a refresh token, try refreshing
+  // If 401 and we have a refresh token, try refreshing once
   if (res.status === 401 && _refreshToken) {
-    const refreshed = await refreshTokens();
+    const refreshed = await safeRefresh();
     if (refreshed) {
       res = await fetch(url, {
         ...init,
