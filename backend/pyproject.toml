@@ -14,4 +14,5 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "requests>=2.33.0",
     "uvicorn[standard]>=0.42.0",
+    "pyjwt[crypto]>=2.9.0",
 ]
