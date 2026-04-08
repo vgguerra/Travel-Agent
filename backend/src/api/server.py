@@ -4,6 +4,7 @@ Started automatically by App.py:  uv run python -m src.App
 Or directly:                       uv run uvicorn src.api.server:app --reload --port 8000
 """
 
+import asyncio
 import datetime
 import uuid
 from contextlib import asynccontextmanager
@@ -195,7 +196,10 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
         state_input.update(_INITIAL_STATE)
 
     try:
-        result = graph.invoke(state_input, config=config)
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None, lambda: graph.invoke(state_input, config=config)
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Agent error: {e}")
 
