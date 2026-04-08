@@ -16,6 +16,10 @@ Travel-Agent/
 └── frontend/         Next.js 16 · TypeScript · Tailwind · Framer Motion
 ```
 
+### Grafo LangGraph
+
+![Diagrama do grafo LangGraph](docs/graph_diagram.png)
+
 **Fluxo:** Usuário → ManagerAgent (extrai parâmetros) → WeatherAgent / TourismAgent / TransportAgent / AccomodationAgent → ConversationalAgent (síntese) → Resposta
 
 ## Pré-requisitos

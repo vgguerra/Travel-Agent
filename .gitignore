@@ -169,3 +169,11 @@ frontend/.env.local
 
 # Logs
 *.log
+
+# Documents and binary files
+*.png
+*.xlsx
+*.pdf
+
+# Exception: allow graph diagram
+!docs/graph_diagram.png
