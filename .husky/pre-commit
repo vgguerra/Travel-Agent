@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+
+# ── Frontend: lint only staged files ──
+cd frontend || exit 1
+npx lint-staged --concurrent false
+
+# ── Backend: syntax-check staged .py files ──
+cd ../backend || exit 0
+staged_py=$(git diff --cached --name-only --diff-filter=ACM -- '*.py' | sed 's|^backend/||')
+if [ -n "$staged_py" ]; then
+  for f in $staged_py; do
+    if [ -f "$f" ]; then
+      python3 -m py_compile "$f" || exit 1
+    fi
+  done
+fi

@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+
+msg_file="$1"
+msg="$(head -n 1 "$msg_file")"
+
+# Allow common auto-generated commit messages.
+case "$msg" in
+  Merge*|Revert*|fixup\!*|squash\!*)
+    exit 0
+    ;;
+esac
+
+pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-z0-9._/-]+\))?!?: .+'
+
+if ! printf '%s\n' "$msg" | grep -Eq "$pattern"; then
+  echo "Mensagem de commit invalida."
+  echo "Use: tipo(escopo): descricao"
+  echo "Exemplo: feat(backend): add appointment validation"
+  echo "Tipos aceitos: feat, fix, docs, style, refactor, perf, test, build, ci, chore"
+  exit 1
+fi
