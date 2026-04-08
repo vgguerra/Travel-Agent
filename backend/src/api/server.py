@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from src.App import App
 from src.TravelAgentSystem import TravelAgentSystem
 from src.api.auth import get_current_user
-from src.db import chat_service
+from src.db import chat_service, profile_service
 from src.db.migrate import run_migrations
 
 # ---------------------------------------------------------------------------
@@ -64,6 +64,14 @@ class SessionMessagesResponse(BaseModel):
 
 class UpdateTitleRequest(BaseModel):
     title: str
+
+
+class CheckUsernameRequest(BaseModel):
+    username: str
+
+
+class ResolveUsernameRequest(BaseModel):
+    username: str
 
 
 # ---------------------------------------------------------------------------
@@ -148,6 +156,24 @@ app.add_middleware(
 @app.get("/health")
 async def health():
     return {"status": "ok", "timestamp": datetime.datetime.utcnow().isoformat()}
+
+
+# ---------------------------------------------------------------------------
+# Routes — auth helpers (public, used before login)
+# ---------------------------------------------------------------------------
+
+@app.post("/api/auth/check-username")
+async def check_username(req: CheckUsernameRequest):
+    exists = profile_service.username_exists(req.username)
+    return {"exists": exists}
+
+
+@app.post("/api/auth/resolve-username")
+async def resolve_username(req: ResolveUsernameRequest):
+    email = profile_service.get_email_by_username(req.username)
+    if not email:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado")
+    return {"email": email}
 
 
 # ---------------------------------------------------------------------------
