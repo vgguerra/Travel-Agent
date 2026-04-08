@@ -203,7 +203,7 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Agent error: {e}")
 
-    # Extract reply — walk backwards to find the last non-empty AI message
+    # Extract reply — walk backwards to find the last non-empty, non-structured AI message
     reply = ""
     for msg in reversed(result["messages"]):
         text = getattr(msg, "content", "")
@@ -213,13 +213,16 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
                 for block in text
             )
         text = (text or "").strip()
-        if text and hasattr(msg, "type") and msg.type == "ai":
-            reply = text
-            break
+        if not text or not (hasattr(msg, "type") and msg.type == "ai"):
+            continue
+        # Skip raw structured output from ManagerAgent
+        if text.startswith("[CIDADE_") or text.startswith("OUTPUT FORMAT:"):
+            continue
+        reply = text
+        break
 
-    # If the reply is raw structured data from the ManagerAgent, replace with
-    # a friendly message asking for trip details.
-    if reply.startswith("OUTPUT FORMAT:") or reply.startswith("[CIDADE_"):
+    # Fallback when only structured data was returned (no conversational reply)
+    if not reply:
         missing = []
         if not result.get("departure_city"):
             missing.append("cidade de saida")
@@ -234,7 +237,7 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
             + ". Me conte sobre a viagem que voce quer fazer!"
         )
 
-    print(f"[chat] session={session_id} reply_len={len(reply)} reply_preview={reply[:80]!r}")
+    print(f"[chat] session={session_id} reply_len={len(reply)} reply_preview={reply[:100]!r}")
 
     # Persist assistant reply (skip if empty)
     if reply:
