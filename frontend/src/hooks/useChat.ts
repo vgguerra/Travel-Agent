@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { ChatMessage, TravelState } from "@/types/travel";
-import { sendMessage, clearSession } from "@/lib/api";
+import { sendMessage, clearSession, getSession } from "@/lib/api";
 
 export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -10,8 +10,6 @@ export function useChat() {
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [travelState, setTravelState] = useState<TravelState | null>(null);
-
-  const abortRef = useRef<AbortController | null>(null);
 
   const send = useCallback(
     async (content: string) => {
@@ -62,5 +60,35 @@ export function useChat() {
     setError(null);
   }, [sessionId]);
 
-  return { messages, loading, error, sessionId, travelState, send, reset };
+  const newChat = useCallback(() => {
+    setMessages([]);
+    setSessionId(null);
+    setTravelState(null);
+    setError(null);
+  }, []);
+
+  const loadSession = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getSession(id);
+      setSessionId(data.session_id);
+      setMessages(
+        data.messages.map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          timestamp: new Date(m.timestamp),
+        }))
+      );
+      setTravelState(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao carregar conversa";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { messages, loading, error, sessionId, travelState, send, reset, newChat, loadSession };
 }
