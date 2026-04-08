@@ -178,7 +178,7 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
         session_id = req.session_id
     else:
         db_session = chat_service.create_session(user_id)
-        session_id = db_session["session_id"]
+        session_id = str(db_session["session_id"])
 
     # Persist user message
     chat_service.add_message(session_id, "user", req.message)
@@ -203,10 +203,17 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Agent error: {e}")
 
-    reply = result["messages"][-1].content
+    # Extract reply — walk backwards to find the last non-empty AI message
+    reply = ""
+    for msg in reversed(result["messages"]):
+        text = getattr(msg, "content", "") or ""
+        if text.strip() and hasattr(msg, "type") and msg.type == "ai":
+            reply = text.strip()
+            break
 
-    # Persist assistant reply
-    chat_service.add_message(session_id, "assistant", reply)
+    # Persist assistant reply (skip if empty)
+    if reply:
+        chat_service.add_message(session_id, "assistant", reply)
 
     # Auto-title on first exchange
     if not req.session_id:
@@ -227,7 +234,11 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
         rooms=result.get("rooms"),
     )
 
-    return ChatResponse(session_id=session_id, reply=reply, state=travel_state)
+    return ChatResponse(
+        session_id=str(session_id),
+        reply=reply or "Desculpe, nao consegui processar sua mensagem. Tente novamente.",
+        state=travel_state,
+    )
 
 
 # ---------------------------------------------------------------------------

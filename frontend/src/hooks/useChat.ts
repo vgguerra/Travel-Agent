@@ -74,12 +74,14 @@ export function useChat() {
       const data = await getSession(id);
       setSessionId(data.session_id);
       setMessages(
-        data.messages.map((m) => ({
-          id: m.id,
-          role: m.role,
-          content: m.content,
-          timestamp: new Date(m.timestamp),
-        }))
+        data.messages
+          .filter((m) => m.content.trim())
+          .map((m) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            timestamp: new Date(m.timestamp),
+          }))
       );
       setTravelState(null);
     } catch (err) {
