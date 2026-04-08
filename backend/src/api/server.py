@@ -206,10 +206,18 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
     # Extract reply — walk backwards to find the last non-empty AI message
     reply = ""
     for msg in reversed(result["messages"]):
-        text = getattr(msg, "content", "") or ""
-        if text.strip() and hasattr(msg, "type") and msg.type == "ai":
-            reply = text.strip()
+        text = getattr(msg, "content", "")
+        if isinstance(text, list):
+            text = " ".join(
+                block.get("text", "") if isinstance(block, dict) else str(block)
+                for block in text
+            )
+        text = (text or "").strip()
+        if text and hasattr(msg, "type") and msg.type == "ai":
+            reply = text
             break
+
+    print(f"[chat] session={session_id} reply_len={len(reply)} reply_preview={reply[:80]!r}")
 
     # Persist assistant reply (skip if empty)
     if reply:
