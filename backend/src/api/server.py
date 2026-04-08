@@ -9,13 +9,15 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 
 from src.App import App
 from src.TravelAgentSystem import TravelAgentSystem
+from src.api.auth import get_current_user
+from src.db import chat_service
 from src.db.migrate import run_migrations
 
 # ---------------------------------------------------------------------------
@@ -47,8 +49,25 @@ class ChatResponse(BaseModel):
     state: TravelState
 
 
+class SessionResponse(BaseModel):
+    session_id: str
+    title: str
+    created_at: str
+    updated_at: str
+
+
+class SessionMessagesResponse(BaseModel):
+    session_id: str
+    title: str
+    messages: list[dict]
+
+
+class UpdateTitleRequest(BaseModel):
+    title: str
+
+
 # ---------------------------------------------------------------------------
-# In-memory session store
+# In-memory session store (graph instances)
 # ---------------------------------------------------------------------------
 
 _INITIAL_STATE = {
@@ -85,6 +104,9 @@ class SessionStore:
         entry = self._sessions[session_id]
         return (entry["graph"], entry["config"]), is_new
 
+    def remove(self, session_id: str):
+        self._sessions.pop(session_id, None)
+
 
 sessions = SessionStore()
 _agents = None
@@ -120,7 +142,7 @@ app.add_middleware(
 
 
 # ---------------------------------------------------------------------------
-# Routes
+# Routes — health (public)
 # ---------------------------------------------------------------------------
 
 @app.get("/health")
@@ -128,9 +150,24 @@ async def health():
     return {"status": "ok", "timestamp": datetime.datetime.utcnow().isoformat()}
 
 
+# ---------------------------------------------------------------------------
+# Routes — chat (authenticated)
+# ---------------------------------------------------------------------------
+
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest):
-    session_id = req.session_id or str(uuid.uuid4())
+async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
+    # Resolve or create DB session
+    if req.session_id:
+        db_session = chat_service.get_session(req.session_id, user_id)
+        if not db_session:
+            raise HTTPException(status_code=404, detail="Sessao nao encontrada")
+        session_id = req.session_id
+    else:
+        db_session = chat_service.create_session(user_id)
+        session_id = db_session["session_id"]
+
+    # Persist user message
+    chat_service.add_message(session_id, "user", req.message)
 
     try:
         (graph, config), is_new = sessions.get_or_create(session_id, _agents, _tools)
@@ -151,6 +188,14 @@ async def chat(req: ChatRequest):
 
     reply = result["messages"][-1].content
 
+    # Persist assistant reply
+    chat_service.add_message(session_id, "assistant", reply)
+
+    # Auto-title on first exchange
+    if not req.session_id:
+        title = req.message[:80]
+        chat_service.update_session_title(session_id, user_id, title)
+
     travel_state = TravelState(
         weather=result.get("weather"),
         tourism=result.get("tourism"),
@@ -168,7 +213,62 @@ async def chat(req: ChatRequest):
     return ChatResponse(session_id=session_id, reply=reply, state=travel_state)
 
 
-@app.delete("/api/session/{session_id}")
-async def clear_session(session_id: str):
-    sessions._sessions.pop(session_id, None)
-    return {"deleted": session_id}
+# ---------------------------------------------------------------------------
+# Routes — sessions (authenticated)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/sessions", response_model=list[SessionResponse])
+async def list_sessions(user_id: str = Depends(get_current_user)):
+    rows = chat_service.list_sessions(user_id)
+    return [
+        SessionResponse(
+            session_id=str(r["session_id"]),
+            title=r["title"],
+            created_at=r["created_at"].isoformat(),
+            updated_at=r["updated_at"].isoformat(),
+        )
+        for r in rows
+    ]
+
+
+@app.get("/api/sessions/{session_id}", response_model=SessionMessagesResponse)
+async def get_session_messages(session_id: str, user_id: str = Depends(get_current_user)):
+    db_session = chat_service.get_session(session_id, user_id)
+    if not db_session:
+        raise HTTPException(status_code=404, detail="Sessao nao encontrada")
+
+    messages = chat_service.get_messages(session_id)
+    return SessionMessagesResponse(
+        session_id=str(db_session["session_id"]),
+        title=db_session["title"],
+        messages=[
+            {
+                "id": str(m["message_id"]),
+                "role": m["role"],
+                "content": m["content"],
+                "timestamp": m["created_at"].isoformat(),
+            }
+            for m in messages
+        ],
+    )
+
+
+@app.patch("/api/sessions/{session_id}")
+async def update_session(
+    session_id: str,
+    req: UpdateTitleRequest,
+    user_id: str = Depends(get_current_user),
+):
+    updated = chat_service.update_session_title(session_id, user_id, req.title)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Sessao nao encontrada")
+    return {"success": True}
+
+
+@app.delete("/api/sessions/{session_id}")
+async def delete_session(session_id: str, user_id: str = Depends(get_current_user)):
+    deleted = chat_service.delete_session(session_id, user_id)
+    sessions.remove(session_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Sessao nao encontrada")
+    return {"success": True}
