@@ -105,9 +105,109 @@ def run_migrations():
             $$;
         """)
 
+        # --- Chat sessions table ---
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.chat_sessions (
+                session_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+                title text NOT NULL DEFAULT 'Nova conversa',
+                created_at timestamptz DEFAULT now(),
+                updated_at timestamptz DEFAULT now()
+            );
+        """)
+
+        cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_chat_sessions_user_id
+                ON public.chat_sessions (user_id);
+        """)
+
+        cur.execute("ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;")
+
+        cur.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_policies
+                    WHERE tablename = 'chat_sessions' AND policyname = 'Users manage own sessions'
+                ) THEN
+                    CREATE POLICY "Users manage own sessions"
+                        ON public.chat_sessions
+                        FOR ALL
+                        USING (auth.uid() = user_id);
+                END IF;
+            END $$;
+        """)
+
+        # --- Chat messages table ---
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.chat_messages (
+                message_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                session_id uuid NOT NULL REFERENCES public.chat_sessions(session_id) ON DELETE CASCADE,
+                role text NOT NULL CHECK (role IN ('user', 'assistant')),
+                content text NOT NULL,
+                created_at timestamptz DEFAULT now()
+            );
+        """)
+
+        cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_chat_messages_session_created
+                ON public.chat_messages (session_id, created_at);
+        """)
+
+        cur.execute("ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;")
+
+        cur.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_policies
+                    WHERE tablename = 'chat_messages' AND policyname = 'Users manage own messages'
+                ) THEN
+                    CREATE POLICY "Users manage own messages"
+                        ON public.chat_messages
+                        FOR ALL
+                        USING (
+                            session_id IN (
+                                SELECT session_id FROM public.chat_sessions
+                                WHERE user_id = auth.uid()
+                            )
+                        );
+                END IF;
+            END $$;
+        """)
+
+        # --- Auto-update updated_at on chat_sessions ---
+        cur.execute("""
+            CREATE OR REPLACE FUNCTION public.update_chat_session_timestamp()
+            RETURNS trigger
+            LANGUAGE plpgsql
+            AS $$
+            BEGIN
+                UPDATE public.chat_sessions
+                SET updated_at = now()
+                WHERE session_id = NEW.session_id;
+                RETURN NEW;
+            END;
+            $$;
+        """)
+
+        cur.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_trigger WHERE tgname = 'on_chat_message_insert'
+                ) THEN
+                    CREATE TRIGGER on_chat_message_insert
+                        AFTER INSERT ON public.chat_messages
+                        FOR EACH ROW
+                        EXECUTE FUNCTION public.update_chat_session_timestamp();
+                END IF;
+            END $$;
+        """)
+
         cur.close()
         conn.close()
-        print("[migrate] Profiles table and trigger ready.")
+        print("[migrate] All tables and triggers ready.")
 
     except Exception as e:
         print(f"[migrate] Warning: could not run migrations: {e}")
