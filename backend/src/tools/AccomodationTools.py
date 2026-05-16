@@ -1,10 +1,8 @@
 import requests
 from geopy import Nominatim
 from langchain_core.tools import tool
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
+from src.config import settings
 
 URL = "https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotelsByCoordinates"
 
@@ -59,8 +57,8 @@ class AccomodationTools:
         }
 
         headers = {
-            "x-rapidapi-key": os.getenv("RAPID_KEY"),
-            "x-rapidapi-host": os.getenv("RAPID_HOST"),
+            "x-rapidapi-key": settings.RAPID_KEY,
+            "x-rapidapi-host": settings.RAPID_HOST,
         }
 
         try:

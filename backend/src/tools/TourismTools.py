@@ -1,10 +1,7 @@
-import os
-
-from langchain_core.tools import tool
-from dotenv import load_dotenv
 import requests
+from langchain_core.tools import tool
 
-load_dotenv()
+from src.config import settings
 
 
 def get_geocode(city: str):
@@ -13,7 +10,7 @@ def get_geocode(city: str):
     query_string = {"query": city}
 
     headers = {
-        "x-rapidapi-key": os.getenv("RAPID_KEY"),
+        "x-rapidapi-key": settings.RAPID_KEY,
         "x-rapidapi-host": "tripadvisor-com1.p.rapidapi.com"
     }
 
@@ -51,7 +48,7 @@ class TourismTools:
         url = "https://tripadvisor-com1.p.rapidapi.com/attractions/search"
 
         headers = {
-            "x-rapidapi-key": os.getenv("RAPID_KEY"),
+            "x-rapidapi-key": settings.RAPID_KEY,
             "x-rapidapi-host": "tripadvisor-com1.p.rapidapi.com"
         }
 

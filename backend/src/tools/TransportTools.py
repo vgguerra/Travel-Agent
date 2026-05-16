@@ -1,11 +1,9 @@
-import os
-
-from dotenv import load_dotenv
-from langchain_core.tools import tool
 from datetime import datetime
-import requests
 
-load_dotenv()
+import requests
+from langchain_core.tools import tool
+
+from src.config import settings
 
 url = "https://tripadvisor16.p.rapidapi.com/api/v1/flights/searchFlights"
 
@@ -78,7 +76,7 @@ class TransportTools:
             querystring["returnDate"] = return_date
 
         headers = {
-            "x-rapidapi-key": os.getenv("RAPID_KEY"),
+            "x-rapidapi-key": settings.RAPID_KEY,
             "x-rapidapi-host": "tripadvisor16.p.rapidapi.com"
         }
 

@@ -3,19 +3,16 @@ Run database migrations on startup.
 Uses IF NOT EXISTS so it's safe to run multiple times.
 """
 
-import os
+from urllib.parse import quote_plus
+
 import psycopg2
-from dotenv import load_dotenv
 
-load_dotenv()
+from src.config import settings
 
-_SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-_SUPABASE_PASSWORD = os.getenv("SUPABASE_PASSWORD", "")
 
 def _get_connection_string() -> str:
-    ref = _SUPABASE_URL.replace("https://", "").replace(".supabase.co", "")
-    from urllib.parse import quote_plus
-    password = quote_plus(_SUPABASE_PASSWORD)
+    ref = settings.SUPABASE_URL.replace("https://", "").replace(".supabase.co", "")
+    password = quote_plus(settings.SUPABASE_PASSWORD)
     return f"postgresql://postgres.{ref}:{password}@aws-1-us-west-2.pooler.supabase.com:5432/postgres"
 
 

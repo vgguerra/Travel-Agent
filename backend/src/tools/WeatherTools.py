@@ -1,11 +1,8 @@
-import os
 import requests
 from langchain_core.tools import tool
-from dotenv import load_dotenv
 
-load_dotenv()
+from src.config import settings
 
-OPENWEATHER_API_KEY: str = os.getenv("OPENWEATHER_API_KEY")
 BASE_URL_FORECAST: str = "https://api.openweathermap.org/data/2.5/forecast"
 
 class WeatherTools:
@@ -28,12 +25,9 @@ class WeatherTools:
                 str: A summarized list of weather forecasts for the requested period.
         """
 
-        if OPENWEATHER_API_KEY is None or BASE_URL_FORECAST is None:
-            raise Exception('API key and base url must be set')
-
         params = {
             "q": city,
-            "appid": OPENWEATHER_API_KEY,
+            "appid": settings.OPENWEATHER_API_KEY,
             "units": "metric",
             "lang": "pt_br",
         }

@@ -1,5 +1,3 @@
-import os
-from dotenv import load_dotenv
 from langchain_ollama import ChatOllama
 from src.TravelAgentSystem import TravelAgentSystem
 from src.agents.AccomodationAgent import AccomodationAgent
@@ -8,15 +6,15 @@ from src.agents.TourismAgent import TourismAgent
 from src.agents.TransportAgent import TransportAgent
 from src.agents.WeatherAgent import WeatherAgent
 from src.agents.ManagerAgent import ManagerAgent
+from src.config import settings
 from src.tools.AccomodationTools import AccomodationTools
 from src.tools.TourismTools import TourismTools
 from src.tools.TransportTools import TransportTools
 from src.tools.WeatherTools import WeatherTools
 
-load_dotenv()
-
 LLM = ChatOllama(
-    model=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
+    model=settings.OLLAMA_MODEL,
+    base_url=settings.OLLAMA_HOST,
     temperature=0.3,
     num_predict=2048,
 )

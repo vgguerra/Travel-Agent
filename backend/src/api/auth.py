@@ -3,37 +3,21 @@ Supabase authentication: JWT validation dependency + auth proxy endpoints.
 All Supabase interaction is server-side — the frontend never needs Supabase keys.
 """
 
-import os
-
 import jwt
 import requests as http_client
-from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
+from src.config import settings
 from src.db import profile_service
-
-load_dotenv()
 
 _bearer = HTTPBearer()
 
 
-def _supabase_url() -> str:
-    return os.getenv("SUPABASE_URL", "")
-
-
-def _anon_key() -> str:
-    return os.getenv("SUPABASE_ANON_KEY", "")
-
-
-def _jwt_secret() -> str:
-    return os.getenv("SUPABASE_JWT_SECRET", "")
-
-
 def _auth_headers() -> dict:
     return {
-        "apikey": _anon_key(),
+        "apikey": settings.SUPABASE_ANON_KEY,
         "Content-Type": "application/json",
     }
 
@@ -49,21 +33,20 @@ def get_current_user(
     token = credentials.credentials
 
     # Try local JWT validation first
-    if _jwt_secret():
-        try:
-            payload = jwt.decode(
-                token,
-                _jwt_secret(),
-                algorithms=["HS256"],
-                audience="authenticated",
-            )
-            return payload["sub"]
-        except (jwt.InvalidTokenError, KeyError):
-            pass  # fall through to API validation
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience="authenticated",
+        )
+        return payload["sub"]
+    except (jwt.InvalidTokenError, KeyError):
+        pass  # fall through to API validation
 
     # Validate via Supabase REST API
     resp = http_client.get(
-        f"{_supabase_url()}/auth/v1/user",
+        f"{settings.SUPABASE_URL}/auth/v1/user",
         headers={**_auth_headers(), "Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -107,7 +90,7 @@ class AuthTokens(BaseModel):
 
 def _supabase_signup(email: str, password: str, name: str, username: str) -> dict:
     resp = http_client.post(
-        f"{_supabase_url()}/auth/v1/signup",
+        f"{settings.SUPABASE_URL}/auth/v1/signup",
         headers=_auth_headers(),
         json={
             "email": email,
@@ -125,7 +108,7 @@ def _supabase_signup(email: str, password: str, name: str, username: str) -> dic
 
 def _supabase_signin(email: str, password: str) -> dict:
     resp = http_client.post(
-        f"{_supabase_url()}/auth/v1/token?grant_type=password",
+        f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=password",
         headers=_auth_headers(),
         json={"email": email, "password": password},
         timeout=10,
@@ -139,7 +122,7 @@ def _supabase_signin(email: str, password: str) -> dict:
 
 def _supabase_refresh(refresh_token: str) -> dict:
     resp = http_client.post(
-        f"{_supabase_url()}/auth/v1/token?grant_type=refresh_token",
+        f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token",
         headers=_auth_headers(),
         json={"refresh_token": refresh_token},
         timeout=10,

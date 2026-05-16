@@ -15,4 +15,5 @@ dependencies = [
     "requests>=2.33.0",
     "uvicorn[standard]>=0.42.0",
     "pyjwt[crypto]>=2.9.0",
+    "pydantic-settings>=2.14.1",
 ]
