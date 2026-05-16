@@ -25,7 +25,7 @@ class _Settings(BaseSettings):
     OLLAMA_MODEL: str = "qwen2.5:7b"
 
     GOOGLE_API_KEY: str = ""
-    GOOGLE_MODEL: str = "gemini-2.0-flash"
+    GOOGLE_MODEL: str = "gemini-2.5-flash"
 
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_MODEL: str = "arcee-ai/trinity-large-thinking:free"
