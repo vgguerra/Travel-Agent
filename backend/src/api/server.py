@@ -239,28 +239,30 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
 
     print(f"[chat] session={session_id} reply_len={len(reply)} reply_preview={reply[:100]!r}")
 
-    # Persist assistant reply (skip if empty)
+    travel_state_dict = {
+        "weather": result.get("weather"),
+        "tourism": result.get("tourism"),
+        "transport": result.get("transport"),
+        "accommodation": result.get("accommodation"),
+        "departure_city": result.get("departure_city"),
+        "destination_city": result.get("destination_city"),
+        "departure_date": result.get("departure_date"),
+        "return_date": result.get("return_date"),
+        "adults": result.get("adults"),
+        "trip_type": result.get("trip_type"),
+        "rooms": result.get("rooms"),
+    }
+
+    # Persist assistant reply with its state snapshot (skip if empty reply)
     if reply:
-        chat_service.add_message(session_id, "assistant", reply)
+        chat_service.add_message(session_id, "assistant", reply, state=travel_state_dict)
 
     # Auto-title on first exchange
     if not req.session_id:
         title = req.message[:80]
         chat_service.update_session_title(session_id, user_id, title)
 
-    travel_state = TravelState(
-        weather=result.get("weather"),
-        tourism=result.get("tourism"),
-        transport=result.get("transport"),
-        accommodation=result.get("accommodation"),
-        departure_city=result.get("departure_city"),
-        destination_city=result.get("destination_city"),
-        departure_date=result.get("departure_date"),
-        return_date=result.get("return_date"),
-        adults=result.get("adults"),
-        trip_type=result.get("trip_type"),
-        rooms=result.get("rooms"),
-    )
+    travel_state = TravelState(**travel_state_dict)
 
     return ChatResponse(
         session_id=str(session_id),
@@ -303,6 +305,7 @@ async def get_session_messages(session_id: str, user_id: str = Depends(get_curre
                 "role": m["role"],
                 "content": m["content"],
                 "timestamp": m["created_at"].isoformat(),
+                "state": m.get("state"),
             }
             for m in messages
         ],

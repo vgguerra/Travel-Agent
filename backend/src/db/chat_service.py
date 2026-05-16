@@ -3,6 +3,7 @@ Service layer for chat session and message persistence.
 Uses psycopg2 with the same connection as migrate.py.
 """
 
+import json
 import uuid
 from typing import Optional
 
@@ -107,18 +108,20 @@ def delete_session(session_id: str, user_id: str) -> bool:
 # Messages
 # ---------------------------------------------------------------------------
 
-def add_message(session_id: str, role: str, content: str) -> dict:
-    """Insert a message into a session."""
+def add_message(session_id: str, role: str, content: str,
+                state: Optional[dict] = None) -> dict:
+    """Insert a message into a session. `state` is optional travel state JSON."""
+    state_json = json.dumps(state) if state else None
     with _conn() as conn:
         conn.autocommit = True
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
                 """
-                INSERT INTO public.chat_messages (session_id, role, content)
-                VALUES (%s, %s, %s)
-                RETURNING message_id, session_id, role, content, created_at
+                INSERT INTO public.chat_messages (session_id, role, content, state)
+                VALUES (%s, %s, %s, %s)
+                RETURNING message_id, session_id, role, content, state, created_at
                 """,
-                (session_id, role, content),
+                (session_id, role, content, state_json),
             )
             return dict(cur.fetchone())
 
@@ -129,7 +132,7 @@ def get_messages(session_id: str) -> list[dict]:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
                 """
-                SELECT message_id, role, content, created_at
+                SELECT message_id, role, content, state, created_at
                 FROM public.chat_messages
                 WHERE session_id = %s
                 ORDER BY created_at ASC

@@ -73,17 +73,20 @@ export function useChat() {
     try {
       const data = await getSession(id);
       setSessionId(data.session_id);
-      setMessages(
-        data.messages
-          .filter((m) => m.content.trim())
-          .map((m) => ({
-            id: m.id,
-            role: m.role,
-            content: m.content,
-            timestamp: new Date(m.timestamp),
-          }))
-      );
-      setTravelState(null);
+      const loaded = data.messages
+        .filter((m) => m.content.trim())
+        .map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          timestamp: new Date(m.timestamp),
+          state: m.state ?? undefined,
+        }));
+      setMessages(loaded);
+      // Restore the latest state so any UI that reads travelState (header, etc.)
+      // shows the trip context after reload.
+      const lastWithState = [...loaded].reverse().find((m) => m.state);
+      setTravelState(lastWithState?.state ?? null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao carregar conversa";
       setError(message);

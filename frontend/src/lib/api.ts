@@ -221,6 +221,7 @@ export interface SessionWithMessages {
     role: "user" | "assistant";
     content: string;
     timestamp: string;
+    state?: import("@/types/travel").TravelState | null;
   }[];
 }
 

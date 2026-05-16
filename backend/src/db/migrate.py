@@ -142,8 +142,15 @@ def run_migrations():
                 session_id uuid NOT NULL REFERENCES public.chat_sessions(session_id) ON DELETE CASCADE,
                 role text NOT NULL CHECK (role IN ('user', 'assistant')),
                 content text NOT NULL,
+                state jsonb,
                 created_at timestamptz DEFAULT now()
             );
+        """)
+
+        # Backfill: add the state column to pre-existing installs.
+        cur.execute("""
+            ALTER TABLE public.chat_messages
+            ADD COLUMN IF NOT EXISTS state jsonb;
         """)
 
         cur.execute("""
