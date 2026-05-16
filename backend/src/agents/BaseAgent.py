@@ -1,6 +1,7 @@
 import logging
 from abc import ABC
 
+from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.prebuilt import ToolNode
 
@@ -78,7 +79,16 @@ class BaseAgent(ABC):
 
         try:
             chain = self._bind_chain()
-            prompt_messages = self.prompt.format_messages(**state)
+            # Only expose the user's latest HumanMessage to the agent prompt.
+            # Other AI messages in state (e.g. Manager's structured extraction)
+            # would contaminate the prompt and cause format mimicry.
+            last_human = next(
+                (m for m in reversed(state.get("messages") or []) if isinstance(m, HumanMessage)),
+                None,
+            )
+            clean_state = dict(state)
+            clean_state["messages"] = [last_human] if last_human else []
+            prompt_messages = self.prompt.format_messages(**clean_state)
             first = chain.invoke(prompt_messages)
             new_messages = [first]
             final = first
