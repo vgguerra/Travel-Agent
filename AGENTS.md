@@ -76,3 +76,15 @@ Next.js 16 has breaking changes vs earlier versions. See `frontend/AGENTS.md` fo
 ## Roadmap
 
 See [docs/ROADMAP.md](./docs/ROADMAP.md). Short version: dynamic tool-use, persistent memory across sessions, agent evaluation harness, real-time tool-call UI, multi-provider LLM, public deploy.
+
+## Skills (project conventions)
+
+Reusable rules live under [.claude/skills/](./.claude/skills/). They are Claude Code SKILL.md files but the content is plain Markdown — any AI agent can read them as project guidelines.
+
+| Skill | Read when | File |
+|---|---|---|
+| `conventional-commits` | Writing or reviewing a commit message | [.claude/skills/conventional-commits/SKILL.md](./.claude/skills/conventional-commits/SKILL.md) |
+| `code-review` | Reviewing a PR or self-reviewing before opening one | [.claude/skills/code-review/SKILL.md](./.claude/skills/code-review/SKILL.md) |
+| `writing-python-tests` | Adding or debugging Python tests | [.claude/skills/writing-python-tests/SKILL.md](./.claude/skills/writing-python-tests/SKILL.md) |
+
+If a project rule in this file conflicts with a skill, this file wins.
