@@ -62,9 +62,9 @@ class AccomodationTools:
         }
 
         try:
-            response = requests.get(URL, headers=headers, params=querystring, timeout=20)
+            response = requests.get(URL, headers=headers, params=querystring, timeout=30)
             response.raise_for_status()
-            data = response.json()
+            data = response.json() or {}
 
             hotels = data.get("data", {}).get("result", [])
             if not hotels:
