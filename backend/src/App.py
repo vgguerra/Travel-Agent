@@ -1,4 +1,3 @@
-from langchain_ollama import ChatOllama
 from src.TravelAgentSystem import TravelAgentSystem
 from src.agents.AccomodationAgent import AccomodationAgent
 from src.agents.ConversationalAgent import ConversationalAgent
@@ -6,18 +5,13 @@ from src.agents.TourismAgent import TourismAgent
 from src.agents.TransportAgent import TransportAgent
 from src.agents.WeatherAgent import WeatherAgent
 from src.agents.ManagerAgent import ManagerAgent
-from src.config import settings
+from src.llm import build_llm
 from src.tools.AccomodationTools import AccomodationTools
 from src.tools.TourismTools import TourismTools
 from src.tools.TransportTools import TransportTools
 from src.tools.WeatherTools import WeatherTools
 
-LLM = ChatOllama(
-    model=settings.OLLAMA_MODEL,
-    base_url=settings.OLLAMA_HOST,
-    temperature=0.3,
-    num_predict=2048,
-)
+LLM = build_llm()
 
 
 class App:
