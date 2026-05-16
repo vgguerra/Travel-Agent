@@ -204,6 +204,8 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f"Agent error: {e}")
 
     # Extract reply — walk backwards to find the last non-empty, non-structured AI message
+    import re as _re
+    BRACKETED_LINE = _re.compile(r"^\s*\[[A-Z_]+\]\s*:\s*")
     reply = ""
     for msg in reversed(result["messages"]):
         text = getattr(msg, "content", "")
@@ -215,8 +217,10 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)):
         text = (text or "").strip()
         if not text or not (hasattr(msg, "type") and msg.type == "ai"):
             continue
-        # Skip raw structured output from ManagerAgent
-        if text.startswith("[CIDADE_") or text.startswith("OUTPUT FORMAT:"):
+        # Skip Manager-style structured output — any AI message whose first
+        # non-empty line looks like [TAG]: ...  or starts with OUTPUT FORMAT:.
+        first_line = next((ln for ln in text.splitlines() if ln.strip()), "")
+        if BRACKETED_LINE.match(first_line) or first_line.strip().startswith("OUTPUT FORMAT:"):
             continue
         reply = text
         break
