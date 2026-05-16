@@ -20,6 +20,8 @@ class ManagerAgent(BaseAgent):
 
     INT_FIELDS = {"adults", "rooms"}
 
+    UNKNOWN_TOKENS = {"unknown", "none", "null", "n/a", "na", ""}
+
     @classmethod
     def _capture_data(cls, input_text: str) -> dict:
         data = {}
@@ -28,6 +30,8 @@ class ManagerAgent(BaseAgent):
             match = re.search(rf"\[{label}\]:\s*\[?([^\[\]\n]+?)\]?\s*$", input_text, re.MULTILINE)
             if match:
                 value = match.group(1).strip()
+                if value.lower() in cls.UNKNOWN_TOKENS:
+                    continue
                 if key in cls.INT_FIELDS:
                     try:
                         value = int(value)
