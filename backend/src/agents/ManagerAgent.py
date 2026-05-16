@@ -1,6 +1,9 @@
 import re
+from datetime import datetime, timedelta
 
 from src.agents.BaseAgent import BaseAgent
+
+DEFAULT_STAY_NIGHTS = 3
 
 
 class ManagerAgent(BaseAgent):
@@ -54,9 +57,19 @@ class ManagerAgent(BaseAgent):
         elif output.get("trip_type") is None:
             output["trip_type"] = "IDA"
 
-        # For one-way trips, use departure_date as return_date (needed for hotel search)
-        if output.get("return_date") is None and output.get("departure_date") is not None:
-            output["return_date"] = output["departure_date"]
+        # One-way trips still need a check-out date for hotel search.
+        # Treat a return_date equal to the departure_date as "no return date" —
+        # Gemini sometimes echoes departure_date into [DATA_VOLTA].
+        departure = output.get("departure_date")
+        return_value = output.get("return_date")
+        missing_return = return_value is None or return_value == departure
+        if missing_return and departure is not None:
+            try:
+                checkin = datetime.strptime(departure, "%Y-%m-%d").date()
+                output["return_date"] = (checkin + timedelta(days=DEFAULT_STAY_NIGHTS)).isoformat()
+                output["trip_type"] = "IDA"
+            except (ValueError, TypeError):
+                output["return_date"] = departure
 
         # Default adults and rooms
         if output.get("adults") is None:
