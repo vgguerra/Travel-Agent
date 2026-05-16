@@ -33,6 +33,11 @@ def _content_to_text(content) -> str:
 
 class BaseAgent(ABC):
 
+    # Whether to force the model to invoke its tool on the first LLM call.
+    # Subclasses can set this to False when the tool is only useful in some
+    # situations and the prompt should decide.
+    force_tool_use: bool = True
+
     def __init__(self, llm=None, tools=None):
         self.prompt = None
         self.llm = llm
@@ -50,14 +55,18 @@ class BaseAgent(ABC):
         )
 
     def _bind_chain(self):
-        """Bind tools, forcing the model to call the (single) tool when available.
+        """Bind tools, optionally forcing the model to call the (single) tool.
 
-        Each agent has exactly one tool, so forcing tool_choice by name avoids
-        Gemini (and other models) skipping the tool and answering from memory.
-        Falls back to a plain bind if the provider rejects tool_choice.
+        Each agent has exactly one tool, so when force_tool_use is True we set
+        tool_choice by name to avoid models skipping the tool and answering
+        from memory. Agents whose tool is only sometimes relevant override
+        force_tool_use = False and let the prompt drive the decision.
         """
         if not self.tools:
             return self.llm
+
+        if not self.force_tool_use:
+            return self.llm.bind_tools(self.tools)
 
         tool_name = getattr(self.tools[0], "name", None)
         if tool_name:
