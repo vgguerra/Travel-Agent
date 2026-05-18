@@ -35,6 +35,7 @@ Foco: deixar a base atual mais sólida antes de adicionar funcionalidades novas.
 - Tabela `user_memory` no Supabase com embeddings (pgvector).
 - ManagerAgent enriquece os parâmetros com memórias relevantes recuperadas.
 - Memórias são extraídas e gravadas implicitamente após cada sessão.
+- Uma mesma conversa não deve ficar segurando o mesmo retorno para o caso de o usuário fazer uma solicitação diferent
 
 **Esforço.** ~2 fins de semana.
 
